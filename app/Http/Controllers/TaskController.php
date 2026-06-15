@@ -74,7 +74,17 @@ class TaskController extends Controller
     {
         abort_unless($task->user_id === $request->user()->id, 403);
 
-        $task->load(['assignee:id,name', 'subtasks.assignee:id,name', 'parent:id,title']);
+        $task->load([
+            'assignee:id,name',
+            'subtasks.assignee:id,name',
+            'parent:id,title',
+            'attachments',
+            'comments.user:id,name',
+        ])
+        ;
+        $task->comments->each(function ($comment) use ($request) {
+            $comment->can_delete = $comment->user_id === $request->user()->id;
+        });
 
         return Inertia::render('Tasks/Show', [
             'task' => $task,

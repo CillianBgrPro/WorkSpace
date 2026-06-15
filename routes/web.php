@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TaskAttachmentController;
+use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +26,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('tasks', TaskController::class);
+    Route::post('tasks/{task}/attachments', [TaskAttachmentController::class, 'store'])
+        ->name('tasks.attachments.store');
+    Route::delete('attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])
+        ->name('attachments.destroy');
+    Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])
+        ->name('tasks.comments.store');
+    Route::delete('comments/{comment}', [TaskCommentController::class, 'destroy'])
+        ->name('comments.destroy');
 });
 
 require __DIR__.'/auth.php';
