@@ -10,6 +10,10 @@ export default {
         './resources/js/**/*.jsx',
     ],
 
+    // 'class' = dark mode only when .dark class is manually added to <html>
+    // Prevents Safari from auto-switching based on macOS dark mode preference
+    darkMode: 'class',
+
     theme: {
         extend: {
             fontFamily: {

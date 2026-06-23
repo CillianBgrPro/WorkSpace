@@ -21,5 +21,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Uncomment to seed calendar events
+        // $this->call(CalendarEventSeeder::class);
     }
 }

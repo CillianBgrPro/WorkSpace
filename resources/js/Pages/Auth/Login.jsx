@@ -4,6 +4,7 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -33,7 +34,9 @@ export default function Login({ status, canResetPassword }) {
                 <div>
                     <InputLabel htmlFor="email" value="Adresse e-mail" />
                     <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">✉</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <EnvelopeIcon className="h-5 w-5" />
+                        </span>
                         <TextInput
                             id="email"
                             type="email"
@@ -50,6 +53,9 @@ export default function Login({ status, canResetPassword }) {
 
                 <div>
                     <div className="flex items-center justify-between">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <LockClosedIcon className="h-5 w-5" />
+                        </span>
                         <InputLabel htmlFor="password" value="Mot de passe" />
                         {canResetPassword && (
                             <Link href={route('password.request')} className="text-sm text-indigo-600 hover:text-indigo-500">

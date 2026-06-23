@@ -15,7 +15,6 @@ export default function ShowTask({ task }) {
             <Head title={task.title} />
 
             <div className="space-y-4">
-                {/* Infos tâche */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-y-3">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Etat: {task.status}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Priorite: {task.priority}</p>
