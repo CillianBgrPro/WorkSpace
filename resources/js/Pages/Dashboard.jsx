@@ -41,12 +41,20 @@ export default function Dashboard({ stats, recentActivities, upcomingDeadlines }
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Activités récentes – Tâches</h3>
                     <ul className="space-y-2">
-                        {recentActivities.tasks.map(task => (
-                            <li key={task.id} className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
-                                <span>{task.title}</span>
-                                <span className="font-medium">{task.status}</span>
-                            </li>
-                        ))}
+                        {recentActivities.tasks.map(task => {
+                            const statusLabel = {
+                                'todo': 'Pas commencer',
+                                'in_progress': 'En cours',
+                                'done': 'Terminé',
+                                'completed': 'Terminé',
+                            };
+                            return (
+                                <li key={task.id} className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
+                                    <span>{task.title}</span>
+                                    <span className="font-medium">{statusLabel[task.status] ?? task.status}</span>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
 

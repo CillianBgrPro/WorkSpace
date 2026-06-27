@@ -4,9 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
@@ -28,36 +25,37 @@ class Task extends Model
         'due_date' => 'date',
     ];
 
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function assignee(): BelongsTo
+    public function assignee()
     {
         return $this->belongsTo(User::class, 'assignee_id');
     }
 
-    public function parent(): BelongsTo
+    public function parent()
     {
         return $this->belongsTo(Task::class, 'parent_task_id');
     }
 
-    public function subtasks(): HasMany
+    public function subtasks()
     {
         return $this->hasMany(Task::class, 'parent_task_id');
     }
 
-    public function attachments(): HasMany
+    public function attachments()
     {
         return $this->hasMany(TaskAttachment::class);
     }
-    public function comments(): HasMany
+
+    public function comments()
     {
         return $this->hasMany(TaskComment::class);
     }
 
-    public function assignedUsers(): BelongsToMany
+    public function assignedUsers()
     {
         return $this->belongsToMany(User::class)->withTimestamps();
     }

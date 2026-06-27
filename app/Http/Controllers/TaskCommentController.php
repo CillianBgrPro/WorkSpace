@@ -4,41 +4,39 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\TaskComment;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class TaskCommentController extends Controller
 {
-    public function store(Request $request, Task $task): RedirectResponse
+    public function store(Request $request, Task $task)
     {
-        // Autorisation
-        abort_unless($task->user_id === $request->user()->id, 403);
+        // verif que la tache appartient bien a l'user connecté
+        if ($task->user_id != auth()->id()) {
+            abort(403);
+        }
 
-        // Validation
-        $validated = $request->validate([
-            'body' => ['required', 'string', 'max:2000'],
+        $request->validate([
+            'body' => 'required|string|max:2000',
         ]);
 
-        // Création du commentaire
-        $task->comments()->create([
-            'user_id' => $request->user()->id,
-            'body' => $validated['body'],
-        ]);
+        $comment = new TaskComment();
+        $comment->task_id = $task->id;
+        $comment->user_id = auth()->id();
+        $comment->body = $request->body;
+        $comment->save();
 
-        // Redirection
-        return redirect()
-            ->route('tasks.show', $task)
-            ->with('success', 'Commentaire ajouté.');
+        return redirect()->route('tasks.show', $task)->with('success', 'Commentaire ajouté.');
     }
 
-    public function destroy(Request $request, TaskComment $comment): RedirectResponse
+    public function destroy(Request $request, TaskComment $comment)
     {
-        abort_unless($comment->task->user_id === $request->user()->id, 403);
+        // on verifie que c'est bien le proprio de la tache
+        if ($comment->task->user_id != auth()->id()) {
+            abort(403);
+        }
 
         $comment->delete();
 
-        return redirect()
-            ->route('tasks.show', $comment->task)
-            ->with('success', 'Commentaire supprimé.');
+        return redirect()->route('tasks.show', $comment->task)->with('success', 'Commentaire supprimé.');
     }
 }

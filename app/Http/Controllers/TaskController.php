@@ -2,41 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreTaskRequest;
-use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use App\Models\User;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class TaskController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
-        $status = $request->string('status')->toString();
-        $priority = $request->string('priority')->toString();
-        $search = $request->string('search')->toString();
-        $view = $request->string('view')->toString() ?: 'list';
+        $status = $request->status;
+        $priority = $request->priority;
+        $search = $request->search;
+        $view = $request->view ? $request->view : 'list';
 
-        $tasks = Task::query()
-            ->where('user_id', $request->user()->id)
-            ->with(['assignee:id,name', 'subtasks'])
-            ->when($status, fn ($query) => $query->where('status', $status))
-            ->when($priority, fn ($query) => $query->where('priority', $priority))
-            ->when($search, fn ($query) => $query->where('title', 'like', "%{$search}%"))
-            ->orderByRaw("
-                CASE priority
-                    WHEN 'critical' THEN 1
-                    WHEN 'high' THEN 2
-                    WHEN 'medium' THEN 3
-                    WHEN 'low' THEN 4
-                    ELSE 5
-                END
-            ")
-            ->latest()
-            ->get();
+        $tasks = Task::where('user_id', auth()->id())->with(['assignee', 'subtasks'])->get();
+
+        // filtrer par status
+        if ($status) {
+            $tasks = Task::where('user_id', auth()->id())->where('status', $status)->with(['assignee', 'subtasks'])->get();
+        }
+
+        // filtrer par priorité
+        if ($priority) {
+            $tasks = Task::where('user_id', auth()->id())->where('priority', $priority)->with(['assignee', 'subtasks'])->get();
+        }
+
+        // les 2 filtres en meme temps
+        if ($status && $priority) {
+            $tasks = Task::where('user_id', auth()->id())
+                ->where('status', $status)
+                ->where('priority', $priority)
+                ->with(['assignee', 'subtasks'])
+                ->get();
+        }
+
+        // recherche par titre
+        if ($search) {
+            $tasks = Task::where('user_id', auth()->id())
+                ->where('title', 'like', '%' . $search . '%')
+                ->with(['assignee', 'subtasks'])
+                ->get();
+        }
 
         return Inertia::render('Tasks/index', [
             'tasks' => $tasks,
@@ -49,75 +56,111 @@ class TaskController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request)
     {
+        $users = User::select('id', 'name')->orderBy('name')->get();
+        $parentTasks = Task::where('user_id', auth()->id())->select('id', 'title')->orderBy('title')->get();
+
         return Inertia::render('Tasks/Create', [
-            'users' => User::select('id', 'name')->orderBy('name')->get(),
-            'parentTasks' => Task::where('user_id', $request->user()->id)
-                ->select('id', 'title')
-                ->orderBy('title')
-                ->get(),
+            'users' => $users,
+            'parentTasks' => $parentTasks,
         ]);
     }
 
-    public function store(StoreTaskRequest $request): RedirectResponse
+    public function store(Request $request)
     {
-        Task::create([
-            ...$request->validated(),
-            'user_id' => $request->user()->id,
+        // validation des données
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'required|string',
+            'priority' => 'required|string',
+            'due_date' => 'nullable|date',
+            'assignee_id' => 'nullable|exists:users,id',
+            'parent_task_id' => 'nullable|exists:tasks,id',
         ]);
+
+        $task = new Task();
+        $task->user_id = auth()->id();
+        $task->title = $data['title'];
+        $task->description = $data['description'] ?? null;
+        $task->status = $data['status'];
+        $task->priority = $data['priority'];
+        $task->due_date = $data['due_date'] ?? null;
+        $task->assignee_id = $data['assignee_id'] ?? null;
+        $task->parent_task_id = $data['parent_task_id'] ?? null;
+        $task->save();
 
         return redirect()->route('tasks.index')->with('success', 'Tache creee avec succes.');
     }
 
-    public function show(Request $request, Task $task): Response
+    public function show(Request $request, Task $task)
     {
-        abort_unless($task->user_id === $request->user()->id, 403);
+        if ($task->user_id != auth()->id()) {
+            abort(403);
+        }
 
-        $task->load([
-            'assignee:id,name',
-            'subtasks.assignee:id,name',
-            'parent:id,title',
-            'attachments',
-            'comments.user:id,name',
-        ])
-        ;
-        $task->comments->each(function ($comment) use ($request) {
-            $comment->can_delete = $comment->user_id === $request->user()->id;
-        });
+        $task->load(['assignee', 'subtasks', 'parent', 'attachments', 'comments.user']);
+
+        // check si l'user peut supprimer les commentaires
+        foreach ($task->comments as $comment) {
+            $comment->can_delete = $comment->user_id == auth()->id();
+        }
 
         return Inertia::render('Tasks/Show', [
             'task' => $task,
         ]);
     }
 
-    public function edit(Request $request, Task $task): Response
+    public function edit(Request $request, Task $task)
     {
-        abort_unless($task->user_id === $request->user()->id, 403);
+        if ($task->user_id != auth()->id()) {
+            abort(403);
+        }
+
+        $users = User::select('id', 'name')->orderBy('name')->get();
+        $parentTasks = Task::where('user_id', auth()->id())->where('id', '!=', $task->id)->select('id', 'title')->orderBy('title')->get();
 
         return Inertia::render('Tasks/Edit', [
             'task' => $task,
-            'users' => User::select('id', 'name')->orderBy('name')->get(),
-            'parentTasks' => Task::where('user_id', $request->user()->id)
-                ->where('id', '!=', $task->id)
-                ->select('id', 'title')
-                ->orderBy('title')
-                ->get(),
+            'users' => $users,
+            'parentTasks' => $parentTasks,
         ]);
     }
 
-    public function update(UpdateTaskRequest $request, Task $task): RedirectResponse
+    public function update(Request $request, Task $task)
     {
-        abort_unless($task->user_id === $request->user()->id, 403);
+        if ($task->user_id != auth()->id()) {
+            abort(403);
+        }
 
-        $task->update($request->validated());
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'required|string',
+            'priority' => 'required|string',
+            'due_date' => 'nullable|date',
+            'assignee_id' => 'nullable|exists:users,id',
+            'parent_task_id' => 'nullable|exists:tasks,id',
+        ]);
+
+        $task->title = $data['title'];
+        $task->description = $data['description'] ?? null;
+        $task->status = $data['status'];
+        $task->priority = $data['priority'];
+        $task->due_date = $data['due_date'] ?? null;
+        $task->assignee_id = $data['assignee_id'] ?? null;
+        $task->parent_task_id = $data['parent_task_id'] ?? null;
+        $task->save();
 
         return redirect()->route('tasks.show', $task)->with('success', 'Tache mise a jour.');
     }
 
-    public function destroy(Request $request, Task $task): RedirectResponse
+    public function destroy(Request $request, Task $task)
     {
-        abort_unless($task->user_id === $request->user()->id, 403);
+        if ($task->user_id != auth()->id()) {
+            abort(403);
+        }
 
         $task->delete();
 

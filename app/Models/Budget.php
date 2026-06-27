@@ -4,8 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Budget extends Model
 {
@@ -29,37 +27,43 @@ class Budget extends Model
         'end_date' => 'date',
     ];
 
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function categories(): HasMany
+    public function categories()
     {
         return $this->hasMany(BudgetCategory::class);
     }
 
-    public function expenses(): HasMany
+    public function expenses()
     {
         return $this->hasMany(Expense::class);
     }
 
-    public function getTotalExpensesAttribute(): float
+    // calcule le total des dépenses du budget
+    public function getTotalExpensesAttribute()
     {
         return $this->expenses()->sum('amount') ?? 0;
     }
 
-    public function getRemainingBudgetAttribute(): float
+    // ce qui reste apres les depenses
+    public function getRemainingBudgetAttribute()
     {
-        return $this->amount - $this->total_expenses;
+        $total = $this->amount - $this->total_expenses;
+        return $total;
     }
 
-    public function getPercentageConsumedAttribute(): float
+    public function getPercentageConsumedAttribute()
     {
-        return $this->amount > 0 ? ($this->total_expenses / $this->amount) * 100 : 0;
+        if ($this->amount > 0) {
+            return ($this->total_expenses / $this->amount) * 100;
+        }
+        return 0;
     }
 
-    public function isAlertTriggered(): bool
+    public function isAlertTriggered()
     {
         return $this->percentage_consumed >= $this->alert_threshold_percentage;
     }

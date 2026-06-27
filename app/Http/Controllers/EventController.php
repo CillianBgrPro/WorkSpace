@@ -13,39 +13,64 @@ class EventController extends Controller
 
     public function index(Request $request)
     {
+        $user = auth()->user();
+        $teamIds = $user->teams()->pluck('teams.id')->toArray();
 
-        $teamIds = $request->user()->teams()->pluck('teams.id');
+        // on recupere tous les events de l'user (ses propres + ceux ou il est invité + ceux de ses teams)
+        $all_events = Event::with(['user', 'participants', 'teams'])->get();
 
-        $events = Event::query()
-            ->where(function ($q) use ($request, $teamIds) {
-                $q->where('user_id', $request->user()->id)
-                  ->orWhereHas('participants', fn($q) => $q->where('users.id', $request->user()->id))
-                  ->orWhereHas('teams', fn($q) => $q->whereIn('teams.id', $teamIds->toArray()));
-            })
-            ->with(['user:id,name', 'participants:id,name', 'teams:id,name'])
-            ->get()
-            ->map(fn($event) => [
-                'id'              => $event->id,
-                'title'           => $event->title,
-                'start'           => $event->start_at->toIso8601String(),
-                'end'             => $event->end_at?->toIso8601String(),
-                'allDay'          => $event->all_day,
-                'color'           => $event->color ?? $this->typeColor($event->type),
-                'extendedProps'   => [
-                    'description'      => $event->description,
-                    'type'             => $event->type,
-                    'creator'          => $event->user->name,
-                    'teams'            => $event->teams->pluck('name'),
-                    'participants'     => $event->participants->pluck('name'),
-                    'reminder'         => $event->reminder,
-                    'reminder_minutes' => $event->reminder_minutes,
-                ],
-            ]);
+        $events = [];
+
+        foreach ($all_events as $event) {
+            $isOwner = $event->user_id == $user->id;
+            $isParticipant = $event->participants->contains('id', $user->id);
+            $isInTeam = false;
+
+            foreach ($event->teams as $team) {
+                if (in_array($team->id, $teamIds)) {
+                    $isInTeam = true;
+                }
+            }
+
+            if ($isOwner || $isParticipant || $isInTeam) {
+                $color = $event->color;
+                if (!$color) {
+                    if ($event->type == 'meeting') {
+                        $color = '#7c3aed';
+                    } elseif ($event->type == 'deadline') {
+                        $color = '#dc2626';
+                    } else {
+                        $color = '#2563eb';
+                    }
+                }
+
+                $events[] = [
+                    'id'            => $event->id,
+                    'title'         => $event->title,
+                    'start'         => $event->start_at->toIso8601String(),
+                    'end'           => $event->end_at ? $event->end_at->toIso8601String() : null,
+                    'allDay'        => $event->all_day,
+                    'color'         => $color,
+                    'extendedProps' => [
+                        'description'      => $event->description,
+                        'type'             => $event->type,
+                        'creator'          => $event->user->name,
+                        'teams'            => $event->teams->pluck('name'),
+                        'participants'     => $event->participants->pluck('name'),
+                        'reminder'         => $event->reminder,
+                        'reminder_minutes' => $event->reminder_minutes,
+                    ],
+                ];
+            }
+        }
+
+        $users = User::select('id', 'name')->orderBy('name')->get();
+        $teams = $user->teams()->select('teams.id', 'teams.name')->orderBy('name')->get();
 
         return Inertia::render('Calendar/Index', [
             'events' => $events,
-            'users'  => User::select('id', 'name')->orderBy('name')->get(),
-            'teams'  => $request->user()->teams()->select('teams.id', 'teams.name')->orderBy('name')->get(),
+            'users'  => $users,
+            'teams'  => $teams,
         ]);
     }
 
@@ -57,7 +82,7 @@ class EventController extends Controller
             'type'             => 'required|in:event,meeting,deadline',
             'color'            => 'nullable|string',
             'start_at'         => 'required|date',
-            'end_at'           => 'nullable|date|after_or_equal:start_at',
+            'end_at'           => 'nullable|date',
             'all_day'          => 'boolean',
             'reminder'         => 'boolean',
             'reminder_minutes' => 'nullable|integer',
@@ -67,14 +92,28 @@ class EventController extends Controller
             'teams.*'          => 'exists:teams,id',
         ]);
 
-        $userTeamIds = $request->user()->teams()->pluck('teams.id')->toArray();
+        // verif que les teams appartiennent bien a l'user
+        $userTeamIds = auth()->user()->teams()->pluck('teams.id')->toArray();
         if (!empty($data['teams'])) {
             foreach ($data['teams'] as $teamId) {
-                abort_unless(in_array($teamId, $userTeamIds), 403);
+                if (!in_array($teamId, $userTeamIds)) {
+                    abort(403);
+                }
             }
         }
 
-        $event = Event::create(collect($data)->except(['teams', 'participants'])->merge(['user_id' => $request->user()->id])->toArray());
+        $event = new Event();
+        $event->user_id = auth()->id();
+        $event->title = $data['title'];
+        $event->description = $data['description'] ?? null;
+        $event->type = $data['type'];
+        $event->color = $data['color'] ?? null;
+        $event->start_at = $data['start_at'];
+        $event->end_at = $data['end_at'] ?? null;
+        $event->all_day = $data['all_day'] ?? false;
+        $event->reminder = $data['reminder'] ?? false;
+        $event->reminder_minutes = $data['reminder_minutes'] ?? null;
+        $event->save();
 
         if (!empty($data['participants'])) {
             $event->participants()->sync($data['participants']);
@@ -89,7 +128,9 @@ class EventController extends Controller
 
     public function update(Request $request, Event $event)
     {
-        abort_unless($event->user_id === $request->user()->id, 403);
+        if ($event->user_id != auth()->id()) {
+            abort(403);
+        }
 
         $data = $request->validate([
             'title'            => 'required|string|max:255',
@@ -97,7 +138,7 @@ class EventController extends Controller
             'type'             => 'required|in:event,meeting,deadline',
             'color'            => 'nullable|string',
             'start_at'         => 'required|date',
-            'end_at'           => 'nullable|date|after_or_equal:start_at',
+            'end_at'           => 'nullable|date',
             'all_day'          => 'boolean',
             'reminder'         => 'boolean',
             'reminder_minutes' => 'nullable|integer',
@@ -107,14 +148,26 @@ class EventController extends Controller
             'teams.*'          => 'exists:teams,id',
         ]);
 
-        $userTeamIds = $request->user()->teams()->pluck('teams.id')->toArray();
+        $userTeamIds = auth()->user()->teams()->pluck('teams.id')->toArray();
         if (!empty($data['teams'])) {
             foreach ($data['teams'] as $teamId) {
-                abort_unless(in_array($teamId, $userTeamIds), 403);
+                if (!in_array($teamId, $userTeamIds)) {
+                    abort(403);
+                }
             }
         }
 
-        $event->update(collect($data)->except(['teams', 'participants'])->toArray());
+        $event->title = $data['title'];
+        $event->description = $data['description'] ?? null;
+        $event->type = $data['type'];
+        $event->color = $data['color'] ?? null;
+        $event->start_at = $data['start_at'];
+        $event->end_at = $data['end_at'] ?? null;
+        $event->all_day = $data['all_day'] ?? false;
+        $event->reminder = $data['reminder'] ?? false;
+        $event->reminder_minutes = $data['reminder_minutes'] ?? null;
+        $event->save();
+
         $event->participants()->sync($data['participants'] ?? []);
         $event->teams()->sync($data['teams'] ?? []);
 
@@ -123,33 +176,30 @@ class EventController extends Controller
 
     public function destroy(Request $request, Event $event)
     {
-        abort_unless($event->user_id === $request->user()->id, 403);
+        if ($event->user_id != auth()->id()) {
+            abort(403);
+        }
+
         $event->delete();
 
         return back()->with('success', 'Événement supprimé.');
     }
 
-
     public function move(Request $request, Event $event)
     {
-        abort_unless($event->user_id === $request->user()->id, 403);
+        if ($event->user_id != auth()->id()) {
+            abort(403);
+        }
 
         $data = $request->validate([
             'start_at' => 'required|date',
             'end_at'   => 'nullable|date',
         ]);
 
-        $event->update($data);
+        $event->start_at = $data['start_at'];
+        $event->end_at = $data['end_at'] ?? null;
+        $event->save();
 
         return redirect()->back()->with('success', 'Événement déplacé.');
-    }
-
-    private function typeColor(string $type): string
-    {
-        return match($type) {
-            'meeting'  => '#7c3aed',
-            'deadline' => '#dc2626',
-            default    => '#2563eb',
-        };
     }
 }

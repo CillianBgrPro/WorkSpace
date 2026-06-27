@@ -2,11 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Team;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Event extends Model
 {
@@ -30,17 +26,17 @@ class Event extends Model
         'reminder' => 'boolean',
     ];
 
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function participants(): BelongsToMany
+    public function participants()
     {
         return $this->belongsToMany(User::class, 'event_user');
     }
 
-    public function teams(): BelongsToMany
+    public function teams()
     {
         return $this->belongsToMany(Team::class)->withTimestamps();
     }

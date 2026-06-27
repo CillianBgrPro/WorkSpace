@@ -4,44 +4,45 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\TaskAttachment;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class TaskAttachmentController extends Controller
 {
-    public function store(Request $request, Task $task): RedirectResponse
+    public function store(Request $request, Task $task)
     {
-        abort_unless($task->user_id === $request->user()->id, 403);
+        if ($task->user_id != auth()->id()) {
+            abort(403);
+        }
 
         $request->validate([
-            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif,pdf', 'max:10240'],
+            'file' => 'required|file|max:10240',
         ]);
 
         $file = $request->file('file');
-        $path = $file->store("tasks/{$task->id}", 'public');
+        $path = $file->store('tasks/' . $task->id, 'public');
 
-        $task->attachments()->create([
-            'user_id' => $request->user()->id,
-            'path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-        ]);
+        $attachment = new TaskAttachment();
+        $attachment->task_id = $task->id;
+        $attachment->user_id = auth()->id();
+        $attachment->path = $path;
+        $attachment->original_name = $file->getClientOriginalName();
+        $attachment->mime_type = $file->getMimeType();
+        $attachment->size = $file->getSize();
+        $attachment->save();
 
-        return redirect()
-            ->route('tasks.show', $task)
-            ->with('success', 'Fichier ajoute avec succes.');
+        return redirect()->route('tasks.show', $task)->with('success', 'Fichier ajoute avec succes.');
     }
 
-    public function destroy(Request $request, TaskAttachment $attachment): RedirectResponse
+    public function destroy(Request $request, TaskAttachment $attachment)
     {
-        abort_unless($attachment->task->user_id === $request->user()->id, 403);
+        // verif que l'user est proprio de la tache liee
+        if ($attachment->task->user_id != auth()->id()) {
+            abort(403);
+        }
 
         $task = $attachment->task;
         $attachment->delete();
 
-        return redirect()
-            ->route('tasks.show', $task)
-            ->with('success', 'Fichier supprime.');
+        return redirect()->route('tasks.show', $task)->with('success', 'Fichier supprime.');
     }
 }

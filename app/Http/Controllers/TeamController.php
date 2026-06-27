@@ -2,19 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\AddTeamMemberRequest;
-use App\Http\Requests\StoreTeamRequest;
-use App\Http\Requests\UpdateTeamRequest;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class TeamController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
+        // recupere toutes les teams avec le nb de membres
         $teams = Team::withCount(['members'])->with('owner')->get();
 
         return Inertia::render('Teams/index', [
@@ -22,60 +19,91 @@ class TeamController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create()
     {
         return Inertia::render('Teams/Create');
     }
 
-    public function store(StoreTeamRequest $request)
+    public function store(Request $request)
     {
-        $team = Team::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'owner_id' => $request->user()->id,
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
         ]);
 
-        $team->members()->attach($request->user()->id, ['role' => 'admin']);
+        $team = new Team();
+        $team->name = $data['name'];
+        $team->description = $data['description'] ?? null;
+        $team->owner_id = auth()->id();
+        $team->save();
+
+        // le createur devient admin de sa team
+        $team->members()->attach(auth()->id(), ['role' => 'admin']);
 
         return redirect()->route('teams.index')->with('success', 'Equipe creee avec succes.');
     }
 
-    public function edit(Request $request, Team $team): Response
+    public function edit(Request $request, Team $team)
     {
-        abort_unless($team->members()->where('user_id', $request->user()->id)->exists(), 403);
+        // verif que l'user est bien membre
+        $isMember = $team->members()->where('user_id', auth()->id())->exists();
+        if (!$isMember) {
+            abort(403);
+        }
 
         $team->load(['members', 'owner']);
+        $users = User::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('Teams/Edit', [
             'team' => $team,
-            'users' => User::select('id', 'name')->orderBy('name')->get(),
+            'users' => $users,
         ]);
     }
 
-    public function update(UpdateTeamRequest $request, Team $team)
+    public function update(Request $request, Team $team)
     {
-        abort_unless($team->members()->where('user_id', $request->user()->id)->exists(), 403);
+        $isMember = $team->members()->where('user_id', auth()->id())->exists();
+        if (!$isMember) {
+            abort(403);
+        }
 
-        $team->update($request->validated());
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $team->name = $data['name'];
+        $team->description = $data['description'] ?? null;
+        $team->save();
 
         return redirect()->route('teams.index')->with('success', 'Equipe mise a jour.');
     }
 
     public function destroy(Request $request, Team $team)
     {
-        abort_unless($team->owner_id === $request->user()->id, 403);
+        if ($team->owner_id != auth()->id()) {
+            abort(403);
+        }
 
         $team->delete();
 
         return redirect()->route('teams.index')->with('success', 'Equipe supprimee.');
     }
 
-    public function addMember(AddTeamMemberRequest $request, Team $team)
+    public function addMember(Request $request, Team $team)
     {
-        abort_unless($team->members()->where('user_id', $request->user()->id)->exists(), 403);
+        $isMember = $team->members()->where('user_id', auth()->id())->exists();
+        if (!$isMember) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'member_id' => 'required|exists:users,id',
+            'role' => 'required|string',
+        ]);
 
         $team->members()->syncWithoutDetaching([
-            $request->member_id => ['role' => $request->role],
+            $data['member_id'] => ['role' => $data['role']],
         ]);
 
         return redirect()->back()->with('success', 'Membre ajoute.');
@@ -83,7 +111,10 @@ class TeamController extends Controller
 
     public function removeMember(Request $request, Team $team, User $user)
     {
-        abort_unless($team->members()->where('user_id', $request->user()->id)->exists(), 403);
+        $isMember = $team->members()->where('user_id', auth()->id())->exists();
+        if (!$isMember) {
+            abort(403);
+        }
 
         $team->members()->detach($user->id);
 

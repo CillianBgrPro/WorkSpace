@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
-import { XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, TrashIcon, CalendarDaysIcon, UsersIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 const TYPES = [
-    { value: 'event', label: '📅 Événement', color: '#2563eb' },
-    { value: 'meeting', label: '🤝 Réunion', color: '#7c3aed' },
-    { value: 'deadline', label: '🚨 Deadline', color: '#dc2626' },
+    { value: 'event', label: 'Événement', color: '#2563eb', icon: CalendarDaysIcon },
+    { value: 'meeting', label: 'Réunion', color: '#7c3aed', icon: UsersIcon },
+    { value: 'deadline', label: 'Deadline', color: '#dc2626', icon: ExclamationTriangleIcon },
 ];
 
 export default function EventModal({ event, defaultDate, users, teams, currentUserId, onClose }) {
@@ -95,6 +95,7 @@ export default function EventModal({ event, defaultDate, users, teams, currentUs
                                     ${form.type === t.value ? 'text-white border-transparent' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
                                 style={form.type === t.value ? { backgroundColor: t.color } : {}}
                             >
+                                <t.icon className="w-3.5 h-3.5 inline-block mr-1" />
                                 {t.label}
                             </button>
                         ))}

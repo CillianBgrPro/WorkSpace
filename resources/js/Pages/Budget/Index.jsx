@@ -1,5 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link } from '@inertiajs/react';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 export default function BudgetIndex({ budgets }) {
     return (
@@ -29,9 +30,10 @@ export default function BudgetIndex({ budgets }) {
                                     </p>
                                 </div>
                                 {budget.is_alert_triggered && (
-                                    <span className="px-2 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 text-xs font-medium">
-                                        ⚠️ Alerte
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+                                        <span>Alerte</span>
+                                    </div>
                                 )}
                             </div>
 
@@ -47,13 +49,12 @@ export default function BudgetIndex({ budgets }) {
                                 </div>
                                 <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                     <div
-                                        className={`h-full transition ${
-                                            budget.percentage_consumed >= 100
-                                                ? 'bg-red-600'
-                                                : budget.percentage_consumed >= budget.alert_threshold
+                                        className={`h-full transition ${budget.percentage_consumed >= 100
+                                            ? 'bg-red-600'
+                                            : budget.percentage_consumed >= budget.alert_threshold
                                                 ? 'bg-yellow-600'
                                                 : 'bg-green-600'
-                                        }`}
+                                            }`}
                                         style={{ width: `${Math.min(budget.percentage_consumed, 100)}%` }}
                                     />
                                 </div>
