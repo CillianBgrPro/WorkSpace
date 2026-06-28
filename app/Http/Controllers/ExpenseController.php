@@ -18,7 +18,7 @@ class ExpenseController extends Controller
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
             'date' => 'required|date',
-            'budget_category_id' => 'nullable|exists:budget_categories,id',
+            'category_id' => 'required|exists:budget_categories,id',
             'notes' => 'nullable|string',
         ]);
 
@@ -27,7 +27,7 @@ class ExpenseController extends Controller
         $expense->description = $data['description'];
         $expense->amount = $data['amount'];
         $expense->date = $data['date'];
-        $expense->budget_category_id = $data['budget_category_id'] ?? null;
+        $expense->category_id = $data['category_id'];
         $expense->notes = $data['notes'] ?? null;
         $expense->save();
 
@@ -44,14 +44,14 @@ class ExpenseController extends Controller
             'description' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
             'date' => 'required|date',
-            'budget_category_id' => 'nullable|exists:budget_categories,id',
+            'category_id' => 'required|exists:budget_categories,id',
             'notes' => 'nullable|string',
         ]);
 
         $expense->description = $data['description'];
         $expense->amount = $data['amount'];
         $expense->date = $data['date'];
-        $expense->budget_category_id = $data['budget_category_id'] ?? null;
+        $expense->category_id = $data['category_id'];
         $expense->notes = $data['notes'] ?? null;
         $expense->save();
 

@@ -29,7 +29,7 @@ class DashboardController extends Controller
         $budget = Budget::where('user_id', $user_id)->where('status', 'active')->first();
 
         if ($budget) {
-            $totalBudget = (float) $budget->total_amount;
+            $totalBudget = (float) $budget->amount;
             $spentBudget = (float) $budget->expenses()->sum('amount');
         } else {
             $totalBudget = 0;
