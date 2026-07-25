@@ -13,6 +13,7 @@ class Team extends Model
         'name',
         'description',
         'owner_id',
+        'project_id',
     ];
 
     public function owner()
@@ -23,5 +24,10 @@ class Team extends Model
     public function members()
     {
         return $this->belongsToMany(User::class)->withPivot('role')->withTimestamps();
+    }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
     }
 }

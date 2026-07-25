@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,14 +11,33 @@ use Inertia\Inertia;
 
 class EventController extends Controller
 {
+    /**
+     * Récupère le projet actif en session et vérifie l'accès.
+     */
+    private function getActiveProject()
+    {
+        $projectId = session('active_project_id');
+        if (!$projectId) return null;
+        $project = Project::find($projectId);
+        if (!$project || !$project->isMember(auth()->user())) return null;
+        return $project;
+    }
+
 
     public function index(Request $request)
     {
+        $project = $this->getActiveProject();
+        if (!$project) {
+            return redirect()->route('projects.index');
+        }
+
         $user = auth()->user();
         $teamIds = $user->teams()->pluck('teams.id')->toArray();
 
-        // on recupere tous les events de l'user (ses propres + ceux ou il est invité + ceux de ses teams)
-        $all_events = Event::with(['user', 'participants', 'teams'])->get();
+        // on recupere tous les events du projet actif
+        $all_events = Event::with(['user', 'participants', 'teams'])
+            ->where('project_id', $project->id)
+            ->get();
 
         $events = [];
 
@@ -64,8 +84,8 @@ class EventController extends Controller
             }
         }
 
-        $users = User::select('id', 'name')->orderBy('name')->get();
-        $teams = $user->teams()->select('teams.id', 'teams.name')->orderBy('name')->get();
+        $users = $project->members()->select('users.id', 'users.name')->orderBy('users.name')->get();
+        $teams = \App\Models\Team::where('project_id', $project->id)->select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('Calendar/Index', [
             'events' => $events,
@@ -104,6 +124,7 @@ class EventController extends Controller
 
         $event = new Event();
         $event->user_id = auth()->id();
+        $event->project_id = session('active_project_id');
         $event->title = $data['title'];
         $event->description = $data['description'] ?? null;
         $event->type = $data['type'];

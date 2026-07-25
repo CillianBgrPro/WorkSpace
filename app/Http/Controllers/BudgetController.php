@@ -3,14 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Budget;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class BudgetController extends Controller
 {
+    /**
+     * Récupère le projet actif en session et vérifie l'accès.
+     */
+    private function getActiveProject()
+    {
+        $projectId = session('active_project_id');
+        if (!$projectId) return null;
+        $project = Project::find($projectId);
+        if (!$project || !$project->isMember(auth()->user())) return null;
+        return $project;
+    }
+
     public function index(Request $request)
     {
-        $budgets = Budget::where('user_id', auth()->id())
+        $project = $this->getActiveProject();
+        if (!$project) {
+            return redirect()->route('projects.index');
+        }
+
+        $budgets = Budget::where('project_id', $project->id)
             ->with(['categories', 'expenses'])
             ->orderBy('start_date', 'desc')
             ->get();
@@ -57,6 +75,7 @@ class BudgetController extends Controller
 
         $budget = new Budget();
         $budget->user_id = auth()->id();
+        $budget->project_id = session('active_project_id');
         $budget->name = $data['name'];
         $budget->description = $data['description'] ?? null;
         $budget->amount = $data['amount'];
@@ -71,7 +90,8 @@ class BudgetController extends Controller
 
     public function show(Request $request, Budget $budget)
     {
-        if ($budget->user_id != auth()->id()) {
+        $project = $this->getActiveProject();
+        if (!$project || $budget->project_id != $project->id) {
             abort(403);
         }
 
@@ -133,7 +153,8 @@ class BudgetController extends Controller
 
     public function edit(Request $request, Budget $budget)
     {
-        if ($budget->user_id != auth()->id()) {
+        $project = $this->getActiveProject();
+        if (!$project || $budget->project_id != $project->id) {
             abort(403);
         }
 
@@ -144,7 +165,8 @@ class BudgetController extends Controller
 
     public function update(Request $request, Budget $budget)
     {
-        if ($budget->user_id != auth()->id()) {
+        $project = $this->getActiveProject();
+        if (!$project || $budget->project_id != $project->id) {
             abort(403);
         }
 
@@ -172,7 +194,8 @@ class BudgetController extends Controller
 
     public function destroy(Request $request, Budget $budget)
     {
-        if ($budget->user_id != auth()->id()) {
+        $project = $this->getActiveProject();
+        if (!$project || $budget->project_id != $project->id) {
             abort(403);
         }
 

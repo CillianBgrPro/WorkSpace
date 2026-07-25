@@ -1,6 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link } from '@inertiajs/react';
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { ExclamationTriangleIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 export default function BudgetIndex({ budgets }) {
     return (
@@ -12,9 +12,18 @@ export default function BudgetIndex({ budgets }) {
                     <h2 className="text-xl font-semibold dark:text-white">Gestion du budget</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Visualisez et contrôlez vos dépenses.</p>
                 </div>
-                <Link href="/budgets/create" className="px-4 py-2 rounded-lg bg-indigo-600 text-white">
-                    Nouveau budget
-                </Link>
+                <div className="flex items-center gap-3">
+                    <a
+                        href={route('reports.expenses.csv')}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                    >
+                        <ArrowDownTrayIcon className="w-4 h-4" />
+                        Export CSV Dépenses
+                    </a>
+                    <Link href="/budgets/create" className="px-4 py-2 rounded-lg bg-indigo-600 text-white">
+                        Nouveau budget
+                    </Link>
+                </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

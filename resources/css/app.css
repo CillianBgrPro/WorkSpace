@@ -276,7 +276,6 @@
     font-weight: 600;
 }
 
-/* Light / Dark Mode Event Colors referencing variables */
 .fc-event-event {
     background-color: var(--event-bg-event) !important;
     border-left-color: var(--event-border-event) !important;
@@ -295,7 +294,6 @@
     color: var(--event-text-deadline) !important;
 }
 
-/* List view premium restyling */
 .fc .fc-list {
     border-radius: 0.75rem !important;
     overflow: hidden !important;

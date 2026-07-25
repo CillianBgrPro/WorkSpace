@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -29,11 +30,25 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $activeProject = null;
+
+        if ($request->user() && session('active_project_id')) {
+            $project = Project::find(session('active_project_id'));
+            if ($project && $project->isMember($request->user())) {
+                $activeProject = [
+                    'id'    => $project->id,
+                    'name'  => $project->name,
+                    'color' => $project->color,
+                ];
+            }
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
             ],
+            'activeProject' => $activeProject,
         ];
     }
 }

@@ -8,6 +8,9 @@ use App\Http\Controllers\TeamController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\BudgetCategoryController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectFileController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,9 +26,31 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+// /dashboard redirige vers la sélection de projet
+Route::get('/dashboard', function () {
+    return redirect()->route('projects.index');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+
+    // projets
+    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+    Route::get('/projects/{project}/dashboard', [DashboardController::class, 'index'])->name('projects.dashboard');
+    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+    Route::post('/projects/{project}/members', [ProjectController::class, 'addMember'])->name('projects.members.add');
+    Route::delete('/projects/{project}/members/{user}', [ProjectController::class, 'removeMember'])->name('projects.members.remove');
+
+    // fichiers de projet
+    Route::get('/project-files', [ProjectFileController::class, 'index'])->name('projects.files.index');
+    Route::post('/project-files', [ProjectFileController::class, 'store'])->name('projects.files.store');
+    Route::get('/project-files/{file}/download', [ProjectFileController::class, 'download'])->name('projects.files.download');
+    Route::delete('/project-files/{file}', [ProjectFileController::class, 'destroy'])->name('projects.files.destroy');
+
+    // exports et rapports
+    Route::get('/reports/tasks/csv', [ReportController::class, 'exportTasks'])->name('reports.tasks.csv');
+    Route::get('/reports/expenses/csv', [ReportController::class, 'exportExpenses'])->name('reports.expenses.csv');
 
     // routes des taches
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
@@ -34,6 +59,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
     Route::get('/tasks/{task}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
     Route::put('/tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status');
     Route::patch('/tasks/{task}', [TaskController::class, 'update']);
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
