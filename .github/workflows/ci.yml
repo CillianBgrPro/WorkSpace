@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: sqlite3, pdo_sqlite, zip, intl, mbstring
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Dépendances PHP
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Dépendances JS et build
+        run: |
+          npm ci --legacy-peer-deps --no-audit --no-fund
+          npm run build
+
+      - name: Tests
+        run: |
+          cp .env.example .env 2>/dev/null || touch .env
+          php artisan key:generate --force
+          php artisan test
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+
+  deploy:
+    name: Déploiement
+    needs: tests
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Déployer sur le VPS
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          # La clé est restreinte côté serveur : elle ne peut lancer que le script de déploiement.
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes root@${{ secrets.DEPLOY_HOST }} deploy
