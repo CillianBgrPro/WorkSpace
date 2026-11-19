@@ -201,6 +201,8 @@ class BudgetController extends Controller
 
         $budget->delete();
 
-        return redirect()->route('budgets.index')->with('success', 'Budget supprimé.');
+        return redirect()->route('budgets.index')
+            ->with('success', "Budget « {$budget->name} » mis à la corbeille.")
+            ->with('undo', route('trash.restore', ['budget', $budget->id]));
     }
 }

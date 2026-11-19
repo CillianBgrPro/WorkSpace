@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Budget extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Concerns\Trashable;
 
     protected $fillable = [
         'user_id',

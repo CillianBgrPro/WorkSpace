@@ -387,8 +387,9 @@ class TaskController extends Controller
     {
         $project = $this->projectFor($task, true);
 
+        // Corbeille : la tâche et ses sous-tâches partent ensemble (et reviennent ensemble).
         $title = $task->title;
-        $task->delete();
+        \App\Support\Trash::deleteTask($task);
 
         ActivityLog::record(
             $project,
@@ -397,6 +398,8 @@ class TaskController extends Controller
             "a supprimé la tâche : {$title}"
         );
 
-        return redirect()->route('tasks.index')->with('success', 'Tâche supprimée.');
+        return redirect()->route('tasks.index')
+            ->with('success', "« {$title} » mise à la corbeille.")
+            ->with('undo', route('trash.restore', ['task', $task->id]));
     }
 }

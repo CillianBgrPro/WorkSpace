@@ -10,7 +10,7 @@ import { Card, CardHeader } from '@/Components/ui/Card';
 import Avatar from '@/Components/ui/Avatar';
 import { assigneesOf } from '@/lib/taskMeta';
 import { StatusBadge, PriorityBadge, DueBadge, RecurrenceBadge } from '@/Components/ui/Badge';
-import { confirmDelete } from '@/Components/ui/ConfirmDialog';
+import { confirmTrash } from '@/Components/ui/ConfirmDialog';
 import { STATUSES, normalizeStatus, isDone } from '@/lib/taskMeta';
 import { formatDate, formatRelative } from '@/lib/format';
 
@@ -29,7 +29,7 @@ export default function ShowTask({ task, canEdit = true, members = [] }) {
 
     const deleteTask = async () => {
         const subs = task.subtasks?.length ?? 0;
-        if (await confirmDelete(`la tâche « ${task.title} »`, subs ? `Ses ${subs} sous-tâche(s) seront aussi supprimées. Cette action est définitive.` : undefined)) {
+        if (await confirmTrash(`la tâche « ${task.title} »`, subs ? `Ses ${subs} sous-tâche(s) partiront avec elle. Restaurable 30 jours depuis la corbeille.` : undefined)) {
             router.delete(`/tasks/${task.id}`);
         }
     };

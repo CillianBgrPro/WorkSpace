@@ -6,7 +6,7 @@ import { CheckIcon } from '@heroicons/react/16/solid';
 import Field, { Input, Textarea, Select } from '@/Components/ui/Field';
 import Button from '@/Components/ui/Button';
 import Avatar from '@/Components/ui/Avatar';
-import { confirmDelete } from '@/Components/ui/ConfirmDialog';
+import { confirmTrash } from '@/Components/ui/ConfirmDialog';
 import { modKey } from '@/Components/ui/Kbd';
 
 const TYPES = [
@@ -97,7 +97,7 @@ export default function EventModal({ event, defaultDate, users, teams, currentUs
     };
 
     const destroy = async () => {
-        if (await confirmDelete(`l'événement « ${event.title} »`)) {
+        if (await confirmTrash(`l'événement « ${event.title} »`, 'Vous pourrez le restaurer depuis la corbeille pendant 30 jours.')) {
             router.delete(route('calendar.destroy', event.id), { preserveScroll: true, onSuccess: onClose });
         }
     };

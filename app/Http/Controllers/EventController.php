@@ -221,8 +221,9 @@ class EventController extends Controller
         }
 
         $event->delete();
+        session()->flash('undo', route('trash.restore', ['event', $event->id]));
 
-        return back()->with('success', 'Événement supprimé.');
+        return back()->with('success', 'Événement mis à la corbeille.');
     }
 
     public function move(Request $request, Event $event)

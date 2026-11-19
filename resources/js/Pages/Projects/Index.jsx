@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import CreateProjectModal from '@/Components/Projects/CreateProjectModal';
-import { confirmDelete } from '@/Components/ui/ConfirmDialog';
+import { confirmTrash } from '@/Components/ui/ConfirmDialog';
 import {
     PlusIcon, FolderIcon, UsersIcon, ChevronRightIcon,
     TrashIcon, ArrowRightOnRectangleIcon, SparklesIcon,
     ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 
-export default function ProjectsIndex({ projects, auth, templates = [] }) {
+export default function ProjectsIndex({ projects, auth, templates = [], trashedProjects = [] }) {
     const [showModal, setShowModal] = useState(false);
 
     const handleDelete = async (project) => {
-        if (await confirmDelete(`le projet « ${project.name} »`, 'Toutes ses tâches, budgets, événements et fichiers seront supprimés pour tous les membres. Cette action est définitive.')) {
+        if (await confirmTrash(`le projet « ${project.name} »`, 'Il disparaîtra pour tous les membres. Vous pourrez le restaurer pendant 30 jours, ensuite il sera supprimé définitivement avec tout son contenu.')) {
             router.delete(route('projects.destroy', project.id));
         }
     };
@@ -115,6 +115,32 @@ export default function ProjectsIndex({ projects, auth, templates = [] }) {
             </div>
 
             {/* Modal création */}
+            {trashedProjects.length > 0 && (
+                <div className="relative z-10 mx-auto max-w-6xl px-4 pb-12 sm:px-6">
+                    <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
+                        Corbeille — {trashedProjects.length}
+                    </h2>
+                    <ul className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+                        {trashedProjects.map((p) => (
+                            <li key={p.id} className="flex items-center gap-3 px-4 py-3">
+                                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: p.color }} />
+                                <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-sm font-medium text-white">{p.name}</span>
+                                    <span className="block text-xs text-gray-400">Effacé définitivement le {new Date(p.purge_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</span>
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => router.post(route('trash.restore', ['project', p.id]))}
+                                    className="rounded-lg border border-white/10 px-3 py-1.5 text-sm font-medium text-gray-200 transition hover:bg-white/10"
+                                >
+                                    Restaurer
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
             {showModal && <CreateProjectModal onClose={() => setShowModal(false)} templates={templates} projects={projects} />}
         </div>
     );

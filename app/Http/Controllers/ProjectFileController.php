@@ -161,10 +161,8 @@ class ProjectFileController extends Controller
             abort(403);
         }
 
-        Storage::disk($file->storageDisk())->delete($file->file_path);
-
         $fileName = $file->name;
-        $file->delete();
+        $file->delete(); // corbeille : le fichier reste sur le disque 30 jours
 
         ActivityLog::record(
             $project,
@@ -173,6 +171,7 @@ class ProjectFileController extends Controller
             "a supprimé le fichier : {$fileName}"
         );
 
-        return back()->with('success', 'Fichier supprimé.');
+        return back()->with('success', "« {$fileName} » mis à la corbeille.")
+            ->with('undo', route('trash.restore', ['file', $file->id]));
     }
 }

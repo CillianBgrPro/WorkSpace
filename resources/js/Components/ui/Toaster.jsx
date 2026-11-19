@@ -8,7 +8,7 @@ let counter = 0;
 
 function emit(type, message, options = {}) {
     if (!message) return;
-    const item = { id: ++counter, type, message, duration: options.duration ?? (type === 'error' ? 6000 : 3500) };
+    const item = { id: ++counter, type, message, action: options.action, duration: options.duration ?? (options.action ? 8000 : type === 'error' ? 6000 : 3500) };
     listeners.forEach((fn) => fn(item));
 }
 
@@ -27,7 +27,12 @@ const STYLES = {
 /** Affiche les messages flash du serveur après chaque navigation Inertia. */
 export function emitFlash(flash) {
     if (!flash) return;
-    if (flash.success) toast.success(flash.success);
+    if (flash.success) {
+        // Suppression : bouton « Annuler » qui restaure depuis la corbeille.
+        toast.success(flash.success, flash.undo ? {
+            action: { label: 'Annuler', run: () => router.post(flash.undo, {}, { preserveScroll: true }) },
+        } : undefined);
+    }
     if (flash.error) toast.error(flash.error);
 }
 
@@ -54,6 +59,15 @@ function ToastItem({ item, onClose }) {
         >
             <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${color}`} aria-hidden="true" />
             <p className="flex-1 leading-5">{item.message}</p>
+            {item.action && (
+                <button
+                    type="button"
+                    onClick={() => { item.action.run(); setVisible(false); }}
+                    className="-my-0.5 shrink-0 rounded-md px-2 py-0.5 text-sm font-semibold text-indigo-300 hover:bg-white/10 hover:text-indigo-200"
+                >
+                    {item.action.label}
+                </button>
+            )}
             <button onClick={() => setVisible(false)} className="-m-1 rounded p-1 text-gray-400 hover:text-white" aria-label="Fermer la notification">
                 <XMarkIcon className="h-4 w-4" />
             </button>

@@ -4,7 +4,7 @@ import {
     HomeIcon, CheckCircleIcon, UsersIcon, CalendarIcon, CurrencyEuroIcon,
     ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ArrowRightOnRectangleIcon,
     FolderIcon, UserPlusIcon, DocumentIcon, Bars3Icon, XMarkIcon, MagnifyingGlassIcon,
-    ChevronUpDownIcon, QuestionMarkCircleIcon, InboxIcon,
+    ChevronUpDownIcon, QuestionMarkCircleIcon, InboxIcon, TrashIcon,
 } from '@heroicons/react/24/outline';
 import {
     HomeIcon as HomeSolid, CheckCircleIcon as CheckSolid, CalendarIcon as CalendarSolid, CurrencyEuroIcon as EuroSolid,
@@ -130,6 +130,7 @@ function SidebarContent({ collapsed, activeProject, navItems, currentUrl, user, 
                             collapsed={collapsed}
                             active={currentUrl.split('?')[0] === `/projects/${activeProject.id}`}
                         />
+                        <NavItem item={{ href: '/trash', icon: TrashIcon, label: 'Corbeille' }} collapsed={collapsed} active={isActive(currentUrl, '/trash')} />
                     </>
                 )}
             </nav>

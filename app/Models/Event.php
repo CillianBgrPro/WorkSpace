@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
+    use \App\Models\Concerns\Trashable;
+
     protected $fillable = [
         'user_id',
         'project_id',

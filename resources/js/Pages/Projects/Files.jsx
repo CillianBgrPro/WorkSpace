@@ -11,7 +11,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/ui/PageHeader';
 import EmptyState from '@/Components/ui/EmptyState';
 import { Spinner } from '@/Components/ui/Button';
-import { confirmDelete } from '@/Components/ui/ConfirmDialog';
+import { confirmTrash } from '@/Components/ui/ConfirmDialog';
 import { toast } from '@/Components/ui/Toaster';
 import { formatRelative, formatDateTime } from '@/lib/format';
 
@@ -70,7 +70,7 @@ export default function ProjectFiles({ files = [], canEdit = false }) {
     };
 
     const remove = async (file) => {
-        if (await confirmDelete(`« ${file.name} »`)) {
+        if (await confirmTrash(`« ${file.name} »`, 'Vous pourrez le restaurer depuis la corbeille pendant 30 jours.')) {
             router.delete(route('projects.files.destroy', file.id), { preserveScroll: true });
         }
     };

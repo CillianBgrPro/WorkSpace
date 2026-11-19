@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Project extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Concerns\Trashable;
 
     protected $fillable = [
         'name',
@@ -130,5 +130,14 @@ class Project extends Model
             return true;
         }
         return $this->members()->where('user_id', $user->id)->exists();
+    }
+
+    protected static function booted(): void
+    {
+        // Suppression définitive d'un projet : on nettoie aussi les fichiers sur le disque.
+        static::forceDeleting(function (Project $project) {
+            ProjectFile::withTrashed()->where('project_id', $project->id)->get()->each->forceDelete();
+            Task::withTrashed()->where('project_id', $project->id)->whereNull('parent_task_id')->get()->each->forceDelete();
+        });
     }
 }

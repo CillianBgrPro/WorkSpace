@@ -5,11 +5,11 @@ import PageHeader from '@/Components/ui/PageHeader';
 import Button from '@/Components/ui/Button';
 import { Card } from '@/Components/ui/Card';
 import BudgetForm from '@/Components/Budget/BudgetForm';
-import { confirmDelete } from '@/Components/ui/ConfirmDialog';
+import { confirmTrash } from '@/Components/ui/ConfirmDialog';
 
 export default function EditBudget({ budget }) {
     const destroy = async () => {
-        if (await confirmDelete(`le budget « ${budget.name} »`, 'Toutes ses catégories et dépenses seront supprimées. Cette action est définitive.')) {
+        if (await confirmTrash(`le budget « ${budget.name} »`, 'Il sera restaurable 30 jours depuis la corbeille, avec ses catégories et dépenses.')) {
             router.delete(`/budgets/${budget.id}`);
         }
     };
@@ -31,7 +31,7 @@ export default function EditBudget({ budget }) {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-sm font-semibold text-gray-900">Supprimer ce budget</h2>
-                        <p className="mt-0.5 text-sm text-gray-500">Supprime aussi ses catégories et toutes ses dépenses.</p>
+                        <p className="mt-0.5 text-sm text-gray-500">Avec ses catégories et dépenses. Restaurable 30 jours depuis la corbeille.</p>
                     </div>
                     <Button variant="danger" icon={TrashIcon} onClick={destroy}>Supprimer</Button>
                 </div>

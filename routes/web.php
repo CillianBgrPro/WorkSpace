@@ -19,6 +19,7 @@ use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\TrashController;
 use App\Http\Controllers\ProfileController;
 
 // page d'accueil
@@ -62,6 +63,11 @@ Route::get('/calendar/feed/{token}.ics', CalendarFeedController::class)
 
 Route::middleware('auth')->group(function () {
     Route::get('/palette', PaletteController::class)->name('palette');
+
+    // Corbeille
+    Route::get('/trash', [TrashController::class, 'index'])->name('trash.index');
+    Route::post('/trash/{type}/{id}/restore', [TrashController::class, 'restore'])->whereIn('type', ['task', 'budget', 'file', 'event', 'project'])->whereNumber('id')->name('trash.restore');
+    Route::delete('/trash/{type}/{id}', [TrashController::class, 'destroy'])->whereIn('type', ['task', 'budget', 'file', 'event', 'project'])->whereNumber('id')->name('trash.destroy');
 
     // Notifications (cloche)
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

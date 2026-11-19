@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Task extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Concerns\Trashable;
 
     protected $fillable = [
         'user_id',
@@ -65,5 +65,14 @@ class Task extends Model
     public function assignedUsers()
     {
         return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    protected static function booted(): void
+    {
+        // Suppression définitive : pièces jointes (et leurs fichiers) puis sous-tâches.
+        static::forceDeleting(function (Task $task) {
+            $task->attachments()->get()->each->delete();
+            static::withTrashed()->where('parent_task_id', $task->id)->get()->each->forceDelete();
+        });
     }
 }

@@ -39,6 +39,9 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Index', [
             'projects'  => $projects,
+            'trashedProjects' => Project::onlyTrashed()->where('owner_id', $user->id)
+                ->get(['id', 'name', 'color', 'deleted_at'])
+                ->map(fn ($p) => [...$p->toArray(), 'purge_at' => $p->deleted_at->copy()->addDays(Project::TRASH_DAYS)]),
             'templates' => collect(\App\Support\ProjectTemplates::all())
                 ->map(fn ($t, $key) => ['key' => $key, 'label' => $t['label'], 'count' => count($t['tasks'])])->values(),
         ]);
@@ -149,7 +152,9 @@ class ProjectController extends Controller
 
         $project->delete();
 
-        return redirect()->route('projects.index')->with('success', 'Projet supprimé.');
+        return redirect()->route('projects.index')
+            ->with('success', "« {$project->name} » mis à la corbeille pour 30 jours.")
+            ->with('undo', route('trash.restore', ['project', $project->id]));
     }
 
     /**

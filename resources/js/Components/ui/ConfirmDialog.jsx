@@ -26,6 +26,15 @@ export const confirmDelete = (what, extra) =>
         danger: true,
     });
 
+/** Mise à la corbeille : restaurable 30 jours, d'où un ton moins alarmant. */
+export const confirmTrash = (what, extra) =>
+    confirmDialog({
+        title: `Supprimer ${what} ?`,
+        message: extra ?? 'Vous pourrez la restaurer depuis la corbeille pendant 30 jours.',
+        confirmLabel: 'Mettre à la corbeille',
+        danger: true,
+    });
+
 export default function ConfirmHost() {
     const [state, setState] = useState(null);
     const confirmRef = useRef(null);
