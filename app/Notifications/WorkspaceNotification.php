@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -10,9 +11,20 @@ use Illuminate\Notifications\Notification;
  * Notification générique : toujours visible dans la cloche, envoyée aussi par e-mail
  * quand $mail est vrai et que l'utilisateur n'a pas désactivé les e-mails.
  */
-class WorkspaceNotification extends Notification
+class WorkspaceNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    /** Retry si le serveur d'e-mails est momentanément indisponible. */
+    public int $tries = 3;
+
+    public array $backoff = [30, 120];
+
+    /** La cloche est mise à jour tout de suite ; seul l'e-mail part en arrière-plan. */
+    public function viaConnections(): array
+    {
+        return ['database' => 'sync'];
+    }
 
     public function __construct(
         public string $type,

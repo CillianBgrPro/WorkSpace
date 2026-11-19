@@ -5,12 +5,24 @@ namespace App\Notifications;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class AddedToProjectNotification extends Notification
+class AddedToProjectNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    /** Retry si le serveur d'e-mails est momentanément indisponible. */
+    public int $tries = 3;
+
+    public array $backoff = [30, 120];
+
+    /** La cloche est mise à jour tout de suite ; seul l'e-mail part en arrière-plan. */
+    public function viaConnections(): array
+    {
+        return ['database' => 'sync'];
+    }
 
     public function __construct(public Project $project, public User $by)
     {

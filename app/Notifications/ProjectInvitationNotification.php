@@ -4,12 +4,24 @@ namespace App\Notifications;
 
 use App\Models\ProjectInvitation;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ProjectInvitationNotification extends Notification
+class ProjectInvitationNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    /** Retry si le serveur d'e-mails est momentanément indisponible. */
+    public int $tries = 3;
+
+    public array $backoff = [30, 120];
+
+    /** La cloche est mise à jour tout de suite ; seul l'e-mail part en arrière-plan. */
+    public function viaConnections(): array
+    {
+        return ['database' => 'sync'];
+    }
 
     public function __construct(public ProjectInvitation $invitation)
     {

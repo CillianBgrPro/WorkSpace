@@ -13,3 +13,4 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('reminders:send')->everyMinute()->withoutOverlapping();
 Schedule::command('reminders:send --due')->dailyAt('08:00');
 Schedule::command('trash:purge')->dailyAt('03:30');
+Schedule::command('backup:run')->dailyAt('03:00')->onFailure(fn () => report(new RuntimeException('La sauvegarde quotidienne a échoué.')));

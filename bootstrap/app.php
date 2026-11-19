@@ -21,5 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Alerte e-mail en production (voir App\Support\ErrorAlert).
+        $exceptions->report(fn (Throwable $e) => \App\Support\ErrorAlert::send($e));
     })->create();

@@ -113,4 +113,23 @@ class NotificationsTest extends TestCase
         $this->assertSame(1, $this->alice->notifications()->count());
         $this->assertSame('due_soon', $this->alice->notifications()->first()->data['type']);
     }
+
+    public function test_bell_is_immediate_while_email_is_queued(): void
+    {
+        config(['queue.default' => 'database']);
+        \Illuminate\Support\Facades\Queue::fake();
+
+        $this->alice->notify(new WorkspaceNotification('task_assigned', 'Hello', route('tasks.index'), mail: true));
+
+        // Cloche : connexion « sync » (exécutée immédiatement en production).
+        \Illuminate\Support\Facades\Queue::assertPushed(
+            \Illuminate\Notifications\SendQueuedNotifications::class,
+            fn ($job) => $job->channels === ['database'] && $job->connection === 'sync',
+        );
+        // E-mail : file d'attente par défaut, traité par le worker.
+        \Illuminate\Support\Facades\Queue::assertPushed(
+            \Illuminate\Notifications\SendQueuedNotifications::class,
+            fn ($job) => $job->channels === ['mail'] && $job->connection !== 'sync',
+        );
+    }
 }
