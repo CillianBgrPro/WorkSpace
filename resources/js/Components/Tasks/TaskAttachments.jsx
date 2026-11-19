@@ -1,100 +1,92 @@
-import { useForm, router } from '@inertiajs/react';
+import { useRef, useState } from 'react';
+import { router } from '@inertiajs/react';
+import { PaperClipIcon, ArrowUpTrayIcon, TrashIcon, DocumentIcon } from '@heroicons/react/24/outline';
+import { Card, CardHeader } from '@/Components/ui/Card';
+import { Spinner } from '@/Components/ui/Button';
+import { confirmDelete } from '@/Components/ui/ConfirmDialog';
+import { toast } from '@/Components/ui/Toaster';
 
-export default function TaskAttachments({ task }) {
+const MAX = 10 * 1024 * 1024;
+const ACCEPT = 'image/*,application/pdf,.pdf';
+
+export default function TaskAttachments({ task, canEdit = true }) {
     const attachments = task.attachments ?? [];
+    const [uploading, setUploading] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
+    const inputRef = useRef(null);
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        file: null,
-    });
-
-    const submit = (e) => {
-        e.preventDefault();
-        if (!data.file) {
-            return;
-        }
-
-        post(route('tasks.attachments.store', task.id), {
+    // Envoi immédiat dès qu'un fichier est choisi ou déposé : pas de bouton « Uploader » à chercher.
+    const upload = (file) => {
+        if (!file) return;
+        if (file.size > MAX) { toast.error('Fichier trop lourd : 10 Mo maximum.'); return; }
+        if (!/^image\/|application\/pdf/.test(file.type)) { toast.error('Formats acceptés : images et PDF.'); return; }
+        setUploading(true);
+        router.post(route('tasks.attachments.store', task.id), { file }, {
             forceFormData: true,
-            onSuccess: () => reset('file'),
+            preserveScroll: true,
+            onError: (errors) => toast.error(errors.file ?? "L'envoi a échoué."),
+            onFinish: () => { setUploading(false); if (inputRef.current) inputRef.current.value = ''; },
         });
     };
 
-    const removeAttachment = (attachmentId) => {
-        if (confirm('Supprimer ce fichier ?')) {
-            router.delete(route('attachments.destroy', attachmentId));
+    const remove = async (attachment) => {
+        if (await confirmDelete(`« ${attachment.original_name} »`)) {
+            router.delete(route('attachments.destroy', attachment.id), { preserveScroll: true });
         }
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow space-y-4">
-            <h3 className="font-semibold dark:text-white">
-                Pieces jointes ({attachments.length})
-            </h3>
+        <Card>
+            <CardHeader title={`Pièces jointes${attachments.length ? ` · ${attachments.length}` : ''}`} icon={PaperClipIcon} />
 
-            <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
-                <div className="flex-1 min-w-[200px]">
-                    <label className="block text-sm font-medium mb-1 dark:text-white">
-                        Ajouter une image ou un PDF
-                    </label>
-                    <input
-                        type="file"
-                        accept="image/*,application/pdf,.pdf"
-                        onChange={(e) => setData('file', e.target.files[0])}
-                        className="w-full text-sm text-gray-600 dark:text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/30 dark:file:text-indigo-300"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        JPG, PNG, WebP, GIF ou PDF — max. 10 Mo
-                    </p>
-                    {errors.file && <p className="text-red-500 text-sm mt-1">{errors.file}</p>}
-                </div>
-                <button
-                    type="submit"
-                    disabled={processing || !data.file}
-                    className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
-                    {processing ? 'Envoi...' : 'Uploader'}
-                </button>
-            </form>
-
-            {attachments.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {attachments.map((attachment) => (
-                        <div
-                            key={attachment.id}
-                            className="group relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"
-                        >
-                            <a href={attachment.url} target="_blank" rel="noopener noreferrer">
-                                {attachment.is_image ? (
-                                    <img
-                                        src={attachment.url}
-                                        alt={attachment.original_name}
-                                        className="w-full h-32 object-cover"
-                                    />
+            {attachments.length > 0 && (
+                <ul className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {attachments.map((a) => (
+                        <li key={a.id} className="group relative overflow-hidden rounded-lg border border-gray-200">
+                            <a href={a.url} target="_blank" rel="noopener noreferrer" className="block">
+                                {a.is_image ? (
+                                    <img src={a.url} alt={a.original_name} className="h-28 w-full object-cover" loading="lazy" />
                                 ) : (
-                                    <div className="w-full h-32 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-300">
-                                        <span className="text-3xl font-bold text-red-600">PDF</span>
-                                        <span className="text-xs mt-1 px-2 text-center">Ouvrir le document</span>
+                                    <div className="flex h-28 w-full flex-col items-center justify-center gap-1 bg-gray-50 text-gray-400">
+                                        <DocumentIcon className="h-8 w-8" />
+                                        <span className="text-[11px] font-semibold uppercase text-rose-500">PDF</span>
                                     </div>
                                 )}
+                                <p className="truncate border-t border-gray-100 px-2 py-1.5 text-xs text-gray-600" title={a.original_name}>{a.original_name}</p>
                             </a>
-                            <div className="p-2 bg-gray-50 dark:bg-gray-900">
-                                <p className="text-xs text-gray-600 dark:text-gray-400 truncate" title={attachment.original_name}>
-                                    {attachment.original_name}
-                                </p>
+                            {canEdit && (
                                 <button
                                     type="button"
-                                    onClick={() => removeAttachment(attachment.id)}
-                                    className="mt-1 text-xs text-red-600 hover:text-red-700"
+                                    onClick={() => remove(a)}
+                                    className="absolute right-1.5 top-1.5 rounded-md bg-white/90 p-1 text-gray-500 shadow-sm transition hover:text-rose-600 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                                    aria-label={`Supprimer ${a.original_name}`}
                                 >
-                                    Supprimer
+                                    <TrashIcon className="h-4 w-4" />
                                 </button>
-                            </div>
-                        </div>
+                            )}
+                        </li>
                     ))}
-                </div>
-            ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Aucun fichier pour le moment.</p>
+                </ul>
             )}
-        </div>
+
+            {canEdit && (
+                <label
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => { e.preventDefault(); setDragOver(false); upload(e.dataTransfer.files?.[0]); }}
+                    className={`flex cursor-pointer items-center justify-center gap-3 rounded-lg border-2 border-dashed px-4 py-5 text-sm transition ${
+                        dragOver ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                >
+                    {uploading ? <Spinner className="h-5 w-5 text-indigo-500" /> : <ArrowUpTrayIcon className="h-5 w-5 text-gray-400" />}
+                    <span>
+                        {uploading ? 'Envoi en cours…' : <><span className="font-medium text-indigo-600">Choisir un fichier</span> ou glissez-le ici</>}
+                        <span className="block text-xs text-gray-400">Images ou PDF · 10 Mo max.</span>
+                    </span>
+                    <input ref={inputRef} type="file" accept={ACCEPT} className="sr-only" disabled={uploading} onChange={(e) => upload(e.target.files?.[0])} />
+                </label>
+            )}
+            {!canEdit && attachments.length === 0 && <p className="text-sm text-gray-400">Aucune pièce jointe.</p>}
+        </Card>
     );
 }

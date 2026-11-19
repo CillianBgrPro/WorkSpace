@@ -1,208 +1,157 @@
-import { useState } from 'react';
-import { Head, useForm, router } from '@inertiajs/react';
-import AppLayout from '@/Layouts/AppLayout';
+import { useMemo, useRef, useState } from 'react';
+import { Head, router } from '@inertiajs/react';
 import {
-    DocumentIcon, ArrowUpTrayIcon, ArrowDownTrayIcon,
-    TrashIcon, DocumentTextIcon, PhotoIcon, TableCellsIcon,
-    ArchiveBoxIcon, CodeBracketIcon
+    DocumentIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, TrashIcon, DocumentTextIcon,
+    PhotoIcon, TableCellsIcon, ArchiveBoxIcon, CodeBracketIcon, MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
+import AppLayout from '@/Layouts/AppLayout';
+import PageHeader from '@/Components/ui/PageHeader';
+import EmptyState from '@/Components/ui/EmptyState';
+import { Spinner } from '@/Components/ui/Button';
+import { confirmDelete } from '@/Components/ui/ConfirmDialog';
+import { toast } from '@/Components/ui/Toaster';
+import { formatRelative, formatDateTime } from '@/lib/format';
+
+const MAX = 10 * 1024 * 1024;
+
+function fileIcon(mimeType, fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext) || mimeType?.startsWith('image/')) return [PhotoIcon, 'bg-violet-50 text-violet-500'];
+    if (['pdf', 'doc', 'docx', 'txt', 'md'].includes(ext)) return [DocumentTextIcon, 'bg-blue-50 text-blue-500'];
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return [TableCellsIcon, 'bg-emerald-50 text-emerald-500'];
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return [ArchiveBoxIcon, 'bg-amber-50 text-amber-500'];
+    if (['js', 'ts', 'jsx', 'json', 'php', 'html', 'css'].includes(ext)) return [CodeBracketIcon, 'bg-pink-50 text-pink-500'];
+    return [DocumentIcon, 'bg-gray-100 text-gray-400'];
+}
+
+function formatSize(bytes) {
+    if (!bytes) return '0 o';
+    const units = ['o', 'Ko', 'Mo', 'Go'];
+    const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+    return `${parseFloat((bytes / 1024 ** i).toFixed(1)).toLocaleString('fr-FR')} ${units[i]}`;
+}
 
 export default function ProjectFiles({ files = [], canEdit = false }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        file: null,
-    });
+    const [dragging, setDragging] = useState(false);
+    const [uploading, setUploading] = useState(null);
+    const [query, setQuery] = useState('');
+    const inputRef = useRef(null);
 
-    const [isDragging, setIsDragging] = useState(false);
-
-    const handleFileChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setData('file', e.target.files[0]);
-        }
-    };
-
-    const submit = (e) => {
-        e.preventDefault();
-        if (!data.file) return;
-
-        post(route('projects.files.store'), {
-            onSuccess: () => {
-                reset();
-            },
+    // Envoi dès la sélection : un geste au lieu de deux.
+    const upload = (file) => {
+        if (!file) return;
+        if (file.size > MAX) { toast.error(`« ${file.name} » dépasse 10 Mo.`); return; }
+        setUploading(file.name);
+        router.post(route('projects.files.store'), { file }, {
+            forceFormData: true,
+            preserveScroll: true,
+            onError: (errors) => toast.error(errors.file ?? "L'envoi a échoué."),
+            onFinish: () => { setUploading(null); if (inputRef.current) inputRef.current.value = ''; },
         });
     };
 
-    const handleDelete = (file) => {
-        if (!confirm(`Supprimer le fichier "${file.name}" ?`)) return;
-        router.delete(route('projects.files.destroy', file.id));
+    const remove = async (file) => {
+        if (await confirmDelete(`« ${file.name} »`)) {
+            router.delete(route('projects.files.destroy', file.id), { preserveScroll: true });
+        }
     };
 
-    const getFileIcon = (mimeType, fileName) => {
-        const ext = fileName.split('.').pop().toLowerCase();
-        if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext) || mimeType?.startsWith('image/')) {
-            return <PhotoIcon className="w-6 h-6 text-purple-500" />;
-        }
-        if (['pdf', 'doc', 'docx', 'txt', 'md'].includes(ext)) {
-            return <DocumentTextIcon className="w-6 h-6 text-blue-500" />;
-        }
-        if (['xls', 'xlsx', 'csv'].includes(ext)) {
-            return <TableCellsIcon className="w-6 h-6 text-emerald-500" />;
-        }
-        if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
-            return <ArchiveBoxIcon className="w-6 h-6 text-amber-500" />;
-        }
-        if (['js', 'ts', 'jsx', 'json', 'php', 'html', 'css'].includes(ext)) {
-            return <CodeBracketIcon className="w-6 h-6 text-pink-500" />;
-        }
-        return <DocumentIcon className="w-6 h-6 text-gray-400" />;
-    };
-
-    const formatFileSize = (bytes) => {
-        if (!bytes || bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    };
+    const filtered = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        return q ? files.filter((f) => f.name.toLowerCase().includes(q)) : files;
+    }, [files, query]);
 
     return (
-        <AppLayout header="Fichiers du Projet">
+        <AppLayout header="Fichiers">
             <Head title="Fichiers" />
 
-            <div className="max-w-6xl mx-auto space-y-6">
+            <PageHeader
+                title="Fichiers"
+                description={files.length ? `${files.length} document${files.length > 1 ? 's' : ''} partagé${files.length > 1 ? 's' : ''} avec l'équipe` : 'Centralisez les documents du projet.'}
+            />
 
-                {/* Zone de téléversement */}
+            <div className="space-y-5">
                 {canEdit && (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
-                        <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-                            Ajouter un document ou fichier
-                        </h2>
-
-                        <form onSubmit={submit} className="space-y-4">
-                            <div
-                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                                onDragLeave={() => setIsDragging(false)}
-                                onDrop={(e) => {
-                                    e.preventDefault();
-                                    setIsDragging(false);
-                                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                                        setData('file', e.dataTransfer.files[0]);
-                                    }
-                                }}
-                                className={`border-2 border-dashed rounded-xl p-8 text-center transition cursor-pointer ${
-                                    isDragging
-                                        ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/20'
-                                        : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400'
-                                }`}
-                                onClick={() => document.getElementById('file-upload-input').click()}
-                            >
-                                <ArrowUpTrayIcon className="w-10 h-10 text-indigo-500 mx-auto mb-3" />
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    {data.file ? (
-                                        <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
-                                            Fichier sélectionné : {data.file.name} ({formatFileSize(data.file.size)})
-                                        </span>
-                                    ) : (
-                                        'Glissez-déposez votre fichier ici, ou cliquez pour parcourir'
-                                    )}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">Taille maximale : 10 Mo</p>
-
-                                <input
-                                    id="file-upload-input"
-                                    type="file"
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                />
-                            </div>
-
-                            {errors.file && (
-                                <p className="text-red-500 text-xs mt-1">{errors.file}</p>
-                            )}
-
-                            {data.file && (
-                                <div className="flex justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => reset()}
-                                        className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 dark:text-gray-300 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={processing}
-                                        className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold disabled:opacity-50 transition shadow"
-                                    >
-                                        {processing ? 'Téléversement...' : 'Téléverser'}
-                                    </button>
-                                </div>
-                            )}
-                        </form>
-                    </div>
+                    <label
+                        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                        onDragLeave={() => setDragging(false)}
+                        onDrop={(e) => { e.preventDefault(); setDragging(false); upload(e.dataTransfer.files?.[0]); }}
+                        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${
+                            dragging ? 'border-indigo-400 bg-indigo-50' : 'border-gray-300 bg-white hover:border-indigo-300 hover:bg-indigo-50/30'
+                        }`}
+                    >
+                        {uploading ? <Spinner className="h-7 w-7 text-indigo-500" /> : <ArrowUpTrayIcon className="h-7 w-7 text-indigo-500" />}
+                        <p className="text-sm text-gray-700">
+                            {uploading
+                                ? <>Envoi de <span className="font-medium">{uploading}</span>…</>
+                                : <><span className="font-semibold text-indigo-600">Choisissez un fichier</span> ou glissez-le ici</>}
+                        </p>
+                        <p className="text-xs text-gray-400">Tous formats · 10 Mo maximum</p>
+                        <input ref={inputRef} type="file" className="sr-only" disabled={!!uploading} onChange={(e) => upload(e.target.files?.[0])} />
+                    </label>
                 )}
 
-                {/* Liste des fichiers */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                            Documents du projet ({files.length})
-                        </h3>
-                    </div>
-
-                    {files.length === 0 ? (
-                        <div className="text-center py-12">
-                            <DocumentIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                                Aucun fichier n'a été téléversé dans ce projet pour le moment.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {files.map((file) => (
-                                <div
-                                    key={file.id}
-                                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 transition"
-                                >
-                                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                                        <div className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                                            {getFileIcon(file.mime_type, file.name)}
-                                        </div>
+                {files.length === 0 ? (
+                    !canEdit && <EmptyState icon={DocumentIcon} title="Aucun fichier" description="Les documents partagés par l'équipe apparaîtront ici." />
+                ) : (
+                    <div className="overflow-hidden rounded-xl border border-gray-200/80 bg-white shadow-sm">
+                        {files.length > 5 && (
+                            <div className="relative border-b border-gray-100">
+                                <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="search"
+                                    data-page-search
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Filtrer les fichiers…"
+                                    aria-label="Filtrer les fichiers"
+                                    className="w-full border-0 py-3 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:ring-0"
+                                />
+                            </div>
+                        )}
+                        <ul className="divide-y divide-gray-100">
+                            {filtered.map((file) => {
+                                const [Icon, tone] = fileIcon(file.mime_type, file.name);
+                                return (
+                                    <li key={file.id} className="group flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
+                                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tone}`}>
+                                            <Icon className="h-5 w-5" />
+                                        </span>
                                         <div className="min-w-0 flex-1">
-                                            <p className="font-medium text-sm text-gray-800 dark:text-white truncate" title={file.name}>
+                                            <a href={route('projects.files.download', file.id)} className="block truncate text-sm font-medium text-gray-900 hover:text-indigo-600" title={file.name}>
                                                 {file.name}
+                                            </a>
+                                            <p className="truncate text-xs text-gray-500">
+                                                {formatSize(file.size)} · {file.user?.name ?? 'Inconnu'}
+                                                {file.created_at && <> · <span title={formatDateTime(file.created_at)}>{formatRelative(file.created_at)}</span></>}
                                             </p>
-                                            <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
-                                                <span>{formatFileSize(file.size)}</span>
-                                                <span>•</span>
-                                                <span>{file.user ? file.user.name : 'Inconnu'}</span>
-                                            </div>
                                         </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-1 ml-2">
                                         <a
                                             href={route('projects.files.download', file.id)}
-                                            className="p-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                                            className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-indigo-600"
                                             title="Télécharger"
+                                            aria-label={`Télécharger ${file.name}`}
                                         >
-                                            <ArrowDownTrayIcon className="w-4 h-4" />
+                                            <ArrowDownTrayIcon className="h-5 w-5" />
                                         </a>
-
                                         {canEdit && (
                                             <button
-                                                onClick={() => handleDelete(file)}
-                                                className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition"
+                                                type="button"
+                                                onClick={() => remove(file)}
+                                                className="rounded-lg p-2 text-gray-400 transition hover:bg-rose-50 hover:text-rose-600 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
                                                 title="Supprimer"
+                                                aria-label={`Supprimer ${file.name}`}
                                             >
-                                                <TrashIcon className="w-4 h-4" />
+                                                <TrashIcon className="h-5 w-5" />
                                             </button>
                                         )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                    </li>
+                                );
+                            })}
+                            {filtered.length === 0 && <li className="px-4 py-8 text-center text-sm text-gray-500">Aucun fichier ne correspond à « {query} ».</li>}
+                        </ul>
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

@@ -1,17 +1,16 @@
-import Checkbox from '@/Components/Checkbox';
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import GoogleButton, { OrSeparator } from '@/Components/GoogleButton';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon } from '@heroicons/react/20/solid';
+import GuestLayout from '@/Layouts/GuestLayout';
+import GoogleButton, { OrSeparator } from '@/Components/GoogleButton';
+import AuthField from '@/Components/Auth/AuthField';
+import Button from '@/Components/ui/Button';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
-        remember: false,
+        remember: true,
     });
 
     const submit = (e) => {
@@ -23,88 +22,67 @@ export default function Login({ status, canResetPassword }) {
         <GuestLayout>
             <Head title="Se connecter" />
 
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Bon retour !</h2>
-            <p className="text-gray-500 mb-8">Connectez-vous pour accéder à votre espace.</p>
+            <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Bon retour !</h1>
+            <p className="mb-8 text-gray-500">Connectez-vous pour accéder à vos projets.</p>
 
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">{status}</div>
+                <div className="mb-6 flex items-start gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800" role="status">
+                    <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                    {status}
+                </div>
             )}
 
             <GoogleButton />
             <OrSeparator />
 
-            <form onSubmit={submit} className="space-y-5">
+            <form onSubmit={submit} className="space-y-5" noValidate>
+                <AuthField
+                    label="Adresse e-mail"
+                    icon={EnvelopeIcon}
+                    type="email"
+                    name="email"
+                    value={data.email}
+                    autoComplete="username"
+                    autoFocus
+                    onChange={(e) => setData('email', e.target.value)}
+                    error={errors.email}
+                />
 
                 <div>
-                    <InputLabel htmlFor="email" value="Adresse e-mail" />
-                    <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <EnvelopeIcon className="h-5 w-5" />
-                        </span>
-                        <TextInput
-                            id="email"
-                            type="email"
-                            name="email"
-                            value={data.email}
-                            className="block w-full pl-9"
-                            autoComplete="username"
-                            isFocused={true}
-                            onChange={(e) => setData('email', e.target.value)}
-                        />
-                    </div>
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div>
-                    <div className="flex items-center justify-between">
-                        <InputLabel htmlFor="password" value="Mot de passe" />
+                    <AuthField
+                        label="Mot de passe"
+                        icon={LockClosedIcon}
+                        type="password"
+                        name="password"
+                        value={data.password}
+                        autoComplete="current-password"
+                        onChange={(e) => setData('password', e.target.value)}
+                        error={errors.password}
+                    />
+                    <div className="mt-2 flex items-center justify-between">
+                        <label className="flex items-center gap-2 text-sm text-gray-600">
+                            <input
+                                type="checkbox"
+                                checked={data.remember}
+                                onChange={(e) => setData('remember', e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                            />
+                            Rester connecté
+                        </label>
                         {canResetPassword && (
-                            <Link href={route('password.request')} className="text-sm text-indigo-600 hover:text-indigo-500">
+                            <Link href={route('password.request')} className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                                 Mot de passe oublié ?
                             </Link>
                         )}
                     </div>
-                    <div className="relative mt-1">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            <LockClosedIcon className="h-5 w-5" />
-                        </span>
-                        <TextInput
-                            id="password"
-                            type="password"
-                            name="password"
-                            value={data.password}
-                            className="block w-full pl-9"
-                            autoComplete="current-password"
-                            onChange={(e) => setData('password', e.target.value)}
-                        />
-                    </div>
-                    <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <Checkbox
-                        name="remember"
-                        checked={data.remember}
-                        onChange={(e) => setData('remember', e.target.checked)}
-                    />
-                    <span className="text-sm text-gray-600">Rester connecté</span>
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={processing}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                    Se connecter →
-                </button>
+                <Button type="submit" size="lg" loading={processing} className="w-full">Se connecter</Button>
 
                 <p className="text-center text-sm text-gray-500">
                     Pas encore de compte ?{' '}
-                    <Link href={route('register')} className="text-indigo-600 font-medium hover:underline">
-                        Créer un compte
-                    </Link>
+                    <Link href={route('register')} className="font-medium text-indigo-600 hover:underline">Créer un compte</Link>
                 </p>
-
             </form>
         </GuestLayout>
     );

@@ -1,53 +1,48 @@
-import InputError from '@/Components/InputError';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { EnvelopeIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ChevronLeftIcon } from '@heroicons/react/20/solid';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, useForm } from '@inertiajs/react';
+import AuthField from '@/Components/Auth/AuthField';
+import Button from '@/Components/ui/Button';
 
 export default function ForgotPassword({ status }) {
-    const { data, setData, post, processing, errors } = useForm({
-        email: '',
-    });
+    const { data, setData, post, processing, errors } = useForm({ email: '' });
 
     const submit = (e) => {
         e.preventDefault();
-
         post(route('password.email'));
     };
 
     return (
         <GuestLayout>
-            <Head title="Forgot Password" />
+            <Head title="Mot de passe oublié" />
 
-            <div className="mb-4 text-sm text-gray-600">
-                Mot de passe oublié ? Aucun problème. Indiquez-nous simplement votre adresse e-mail
-                et nous vous enverrons un lien de réinitialisation qui vous permettra d'en choisir un nouveau.
-            </div>
+            <Link href={route('login')} className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-800">
+                <ChevronLeftIcon className="h-4 w-4" /> Retour à la connexion
+            </Link>
+            <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Mot de passe oublié ?</h1>
+            <p className="mb-8 text-gray-500">Indiquez votre e-mail : nous vous envoyons un lien pour en choisir un nouveau.</p>
 
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                <div className="mb-6 flex items-start gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-sm text-emerald-800" role="status">
+                    <CheckCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
                     {status}
                 </div>
             )}
 
-            <form onSubmit={submit}>
-                <TextInput
-                    id="email"
+            <form onSubmit={submit} className="space-y-5" noValidate>
+                <AuthField
+                    label="Adresse e-mail"
+                    icon={EnvelopeIcon}
                     type="email"
                     name="email"
                     value={data.email}
-                    className="mt-1 block w-full"
-                    isFocused={true}
+                    autoComplete="username"
+                    autoFocus
                     onChange={(e) => setData('email', e.target.value)}
+                    error={errors.email}
                 />
-
-                <InputError message={errors.email} className="mt-2" />
-
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Envoyer le lien par e-mail
-                    </PrimaryButton>
-                </div>
+                <Button type="submit" size="lg" loading={processing} className="w-full">Envoyer le lien</Button>
             </form>
         </GuestLayout>
     );

@@ -40,7 +40,8 @@ class TaskController extends Controller
         $view     = $request->view ? $request->view : 'list';
 
         $query = Task::where('project_id', $project->id)
-            ->with(['assignee', 'subtasks']);
+            ->with(['assignee:id,name'])
+            ->withCount('subtasks');
 
         if ($status) {
             $query->where('status', $status);
@@ -54,7 +55,12 @@ class TaskController extends Controller
             $query->where('title', 'like', '%' . $search . '%');
         }
 
-        $tasks = $query->get();
+        // Ordre utile : échéance la plus proche d'abord, puis priorité.
+        $tasks = $query
+            ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('due_date')
+            ->orderByRaw("CASE priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
+            ->get();
 
         return Inertia::render('Tasks/index', [
             'tasks' => $tasks,
@@ -65,6 +71,7 @@ class TaskController extends Controller
                 'view'     => $view,
             ],
             'canEdit' => $project->canEdit(auth()->user()),
+            'members' => $project->members()->select('users.id', 'users.name')->orderBy('users.name')->get(),
         ]);
     }
 
@@ -82,6 +89,10 @@ class TaskController extends Controller
         return Inertia::render('Tasks/Create', [
             'users'       => $users,
             'parentTasks' => $parentTasks,
+            'defaults'    => [
+                'parent_task_id' => $request->integer('parent') ?: null,
+                'status'         => in_array($request->status, ['todo', 'in_progress', 'done']) ? $request->status : 'todo',
+            ],
         ]);
     }
 
@@ -95,8 +106,9 @@ class TaskController extends Controller
         $data = $request->validate([
             'title'          => 'required|string|max:255',
             'description'    => 'nullable|string',
-            'status'         => 'required|string',
-            'priority'       => 'required|string',
+            'specification'  => 'nullable|string',
+            'status'         => 'required|in:todo,in_progress,done,doing,completed',
+            'priority'       => 'required|in:low,medium,high,critical',
             'due_date'       => 'nullable|date',
             'assignee_id'    => 'nullable|exists:users,id',
             'parent_task_id' => 'nullable|exists:tasks,id',
@@ -107,6 +119,7 @@ class TaskController extends Controller
         $task->project_id     = $project->id;
         $task->title          = $data['title'];
         $task->description    = $data['description'] ?? null;
+        $task->specification  = $data['specification'] ?? null;
         $task->status         = $data['status'];
         $task->priority       = $data['priority'];
         $task->due_date       = $data['due_date'] ?? null;
@@ -121,7 +134,12 @@ class TaskController extends Controller
             "a créé la tâche : {$task->title}"
         );
 
-        return redirect()->route('tasks.index')->with('success', 'Tâche créée avec succès.');
+        // Ajout rapide (kanban, sous-tâche…) : on reste sur la page d'origine.
+        if ($request->boolean('quick')) {
+            return back()->with('success', 'Tâche créée.');
+        }
+
+        return redirect()->route('tasks.show', $task)->with('success', 'Tâche créée avec succès.');
     }
 
     public function show(Request $request, Task $task)
@@ -131,7 +149,7 @@ class TaskController extends Controller
             abort(403);
         }
 
-        $task->load(['assignee', 'subtasks', 'parent', 'attachments', 'comments.user']);
+        $task->load(['assignee:id,name', 'user:id,name', 'subtasks', 'parent:id,title', 'attachments', 'comments.user:id,name']);
 
         foreach ($task->comments as $comment) {
             $comment->can_delete = $comment->user_id == auth()->id();
@@ -174,8 +192,9 @@ class TaskController extends Controller
         $data = $request->validate([
             'title'          => 'required|string|max:255',
             'description'    => 'nullable|string',
-            'status'         => 'required|string',
-            'priority'       => 'required|string',
+            'specification'  => 'nullable|string',
+            'status'         => 'required|in:todo,in_progress,done,doing,completed',
+            'priority'       => 'required|in:low,medium,high,critical',
             'due_date'       => 'nullable|date',
             'assignee_id'    => 'nullable|exists:users,id',
             'parent_task_id' => 'nullable|exists:tasks,id',
@@ -183,6 +202,7 @@ class TaskController extends Controller
 
         $task->title          = $data['title'];
         $task->description    = $data['description'] ?? null;
+        $task->specification  = $data['specification'] ?? null;
         $task->status         = $data['status'];
         $task->priority       = $data['priority'];
         $task->due_date       = $data['due_date'] ?? null;
@@ -229,7 +249,11 @@ class TaskController extends Controller
             "a passé la tâche \"{$task->title}\" à : " . ($statusLabels[$task->status] ?? $task->status)
         );
 
-        return back()->with('success', 'Statut de la tâche mis à jour.');
+        $label = $statusLabels[$task->status] ?? $task->status;
+
+        return back()->with('success', in_array($task->status, ['done', 'completed'])
+            ? "« {$task->title} » terminée."
+            : "« {$task->title} » → {$label}.");
     }
 
     public function destroy(Request $request, Task $task)

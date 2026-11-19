@@ -1,46 +1,61 @@
-import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link } from '@inertiajs/react';
+import { PlusIcon, UsersIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import AppLayout from '@/Layouts/AppLayout';
+import PageHeader from '@/Components/ui/PageHeader';
+import Button from '@/Components/ui/Button';
+import EmptyState from '@/Components/ui/EmptyState';
+import { AvatarStack } from '@/Components/ui/Avatar';
 
 export default function TeamIndex({ teams }) {
     return (
-        <AppLayout header="Equipes">
-            <Head title="Equipes" />
+        <AppLayout header="Équipes">
+            <Head title="Équipes" />
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-                <div>
-                    <h2 className="text-xl font-semibold dark:text-white">Gestion des equipes</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Créer et organiser vos collaborateurs.</p>
-                </div>
-                <Link href="/teams/create" className="text-center whitespace-nowrap px-4 py-2 rounded-lg bg-indigo-600 text-white">
-                    Nouvelle equipe
-                </Link>
-            </div>
+            <PageHeader
+                title="Équipes"
+                description="Regroupez les membres du projet par pôle pour les inviter d'un coup aux événements."
+                actions={<Button href="/teams/create" icon={PlusIcon}>Nouvelle équipe</Button>}
+            />
 
-            <div className="grid gap-4 md:grid-cols-2">
-                {teams.map((team) => (
-                    <div key={team.id} className="bg-white dark:bg-gray-800 rounded-xl p-5 shadow">
-                        <div className="flex items-start justify-between gap-3">
-                            <div>
-                                <h3 className="text-lg font-semibold dark:text-white">{team.name}</h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">{team.description || 'Aucune description'}</p>
+            {teams.length === 0 ? (
+                <EmptyState
+                    icon={UsersIcon}
+                    title="Aucune équipe"
+                    description="Créez une équipe (ex. « Front-end », « Design ») et ajoutez-y des membres du projet."
+                    action={<Button href="/teams/create" icon={PlusIcon}>Créer une équipe</Button>}
+                />
+            ) : (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {teams.map((team) => (
+                        <Link
+                            key={team.id}
+                            href={`/teams/${team.id}/edit`}
+                            className="group flex flex-col rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm transition hover:border-gray-300 hover:shadow"
+                        >
+                            <div className="flex items-start gap-3">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                                    <UsersIcon className="h-5 w-5" />
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <h2 className="truncate font-semibold text-gray-900 group-hover:text-indigo-700">{team.name}</h2>
+                                    <p className="mt-0.5 line-clamp-2 text-sm text-gray-500">{team.description || 'Aucune description'}</p>
+                                </div>
+                                <ChevronRightIcon className="h-5 w-5 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-gray-500" />
                             </div>
-                            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 dark:text-gray-200">
-                                {team.members_count} membres
-                            </span>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2 text-sm text-gray-500 dark:text-gray-400">
-                            <span>Proprietaire: {team.owner.name}</span>
-                        </div>
-
-                        <div className="mt-5 flex gap-2 flex-wrap">
-                            <Link href={`/teams/${team.id}/edit`} className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-200">
-                                Gerer
-                            </Link>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                            <div className="mt-5 flex items-center justify-between">
+                                {team.members?.length ? (
+                                    <AvatarStack names={team.members.map((m) => m.name)} />
+                                ) : (
+                                    <span className="text-xs text-gray-400">Aucun membre</span>
+                                )}
+                                <span className="text-xs text-gray-500">
+                                    {team.members_count} membre{team.members_count > 1 ? 's' : ''}
+                                </span>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            )}
         </AppLayout>
     );
 }

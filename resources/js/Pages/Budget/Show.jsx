@@ -1,5 +1,9 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import PageHeader from '@/Components/ui/PageHeader';
+import Button from '@/Components/ui/Button';
+import { confirmDelete } from '@/Components/ui/ConfirmDialog';
+import { formatMoney, formatDate, formatShortDate } from '@/lib/format';
 import { 
     TrashIcon, 
     PaperClipIcon, 
@@ -37,30 +41,33 @@ export default function ShowBudget({ budget }) {
     const addCategory = (e) => {
         e.preventDefault();
         post(`/budgets/${budget.id}/categories`, {
+            preserveScroll: true,
             onSuccess: () => {
                 setData({ category_name: '', category_color: '#6366f1' });
             },
         });
     };
 
-    const deleteCategory = (id, name) => {
-        if (confirm(`Voulez-vous vraiment supprimer la catégorie "${name}" ?\n\nAttention : cela supprimera définitivement TOUTES les dépenses associées à cette catégorie.`)) {
-            router.delete(`/categories/${id}`);
+    const deleteCategory = async (id, name) => {
+        if (await confirmDelete(`la catégorie « ${name} »`, 'Toutes les dépenses de cette catégorie seront aussi supprimées. Cette action est définitive.')) {
+            router.delete(`/categories/${id}`, { preserveScroll: true });
         }
     };
 
     const addExpense = (e) => {
         e.preventDefault();
         postExpense(`/budgets/${budget.id}/expenses`, {
+            preserveScroll: true,
             onSuccess: () => {
-                resetExpense();
+                // On garde catégorie et date : on enchaîne souvent plusieurs saisies.
+                resetExpense('description', 'amount', 'receipt_url', 'notes');
             },
         });
     };
 
-    const deleteExpense = (id) => {
-        if (confirm('Supprimer cette dépense ?')) {
-            router.delete(`/expenses/${id}`);
+    const deleteExpense = async (id) => {
+        if (await confirmDelete('cette dépense')) {
+            router.delete(`/expenses/${id}`, { preserveScroll: true });
         }
     };
 
@@ -69,41 +76,21 @@ export default function ShowBudget({ budget }) {
     const isNearLimit = budget.percentage_consumed >= budget.alert_threshold && budget.percentage_consumed < 100;
 
     return (
-        <AppLayout header={`Détails du budget : ${budget.name}`}>
+        <AppLayout header={budget.name}>
             <Head title={budget.name} />
 
             <div className="space-y-6">
                 
-                {/* Header Actions */}
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                        <Link 
-                            href="/budgets" 
-                            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition"
-                        >
-                            <ArrowLeftIcon className="w-5 h-5" />
-                        </Link>
-                        <div>
-                            <h2 className="text-2xl font-bold dark:text-white">{budget.name}</h2>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                Période : {budget.start_date} {budget.end_date && `au ${budget.end_date}`}
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                        <Link 
-                            href={`/budgets/${budget.id}/edit`} 
-                            className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition shadow-sm"
-                        >
-                            <PencilSquareIcon className="w-4 h-4" />
-                            Modifier
-                        </Link>
-                    </div>
-                </div>
+                <PageHeader
+                    className="!mb-0"
+                    back={{ href: '/budgets', label: 'Budgets' }}
+                    title={budget.name}
+                    description={`${formatDate(budget.start_date)}${budget.end_date ? ` → ${formatDate(budget.end_date)}` : ' · sans date de fin'}`}
+                    actions={<Button variant="secondary" href={`/budgets/${budget.id}/edit`} icon={PencilSquareIcon}>Modifier</Button>}
+                />
 
                 {/* Main Budget Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                         <div className="space-y-1">
                             <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Description</span>
@@ -135,7 +122,7 @@ export default function ShowBudget({ budget }) {
                     <div className="mb-6">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                Dépensé : <span className="font-bold text-gray-800 dark:text-white">{budget.total_expenses.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€</span> sur {budget.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                Dépensé : <span className="font-bold text-gray-800 dark:text-white">{formatMoney(budget.total_expenses)}</span> sur {formatMoney(budget.amount)}
                             </span>
                             <span className={`text-sm font-bold ${isOverBudget ? 'text-red-600 dark:text-red-400' : isNearLimit ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'}`}>
                                 {budget.percentage_consumed.toFixed(1)}%
@@ -160,13 +147,13 @@ export default function ShowBudget({ budget }) {
                         <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
                             <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Enveloppe globale</span>
                             <span className="text-2xl font-bold text-gray-900 dark:text-white block mt-1">
-                                {budget.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                {formatMoney(budget.amount)}
                             </span>
                         </div>
                         <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
                             <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Dépensé</span>
                             <span className="text-2xl font-bold text-gray-900 dark:text-white block mt-1">
-                                {budget.total_expenses.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                {formatMoney(budget.total_expenses)}
                             </span>
                         </div>
                         <div className={`rounded-xl p-4 border ${
@@ -175,14 +162,14 @@ export default function ShowBudget({ budget }) {
                                 : 'bg-red-50/50 dark:bg-red-950/20 border-red-100 dark:border-red-900/40'
                         }`}>
                             <span className={`text-xs font-semibold uppercase tracking-wider ${
-                                budget.remaining_budget >= 0 ? 'text-green-600 dark:text-green-450' : 'text-red-600 dark:text-red-400'
+                                budget.remaining_budget >= 0 ? 'text-green-600' : 'text-red-600 dark:text-red-400'
                             }`}>
                                 Solde Restant
                             </span>
                             <span className={`text-2xl font-bold block mt-1 ${
                                 budget.remaining_budget >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
                             }`}>
-                                {budget.remaining_budget.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                {formatMoney(budget.remaining_budget)}
                             </span>
                         </div>
                     </div>
@@ -192,7 +179,7 @@ export default function ShowBudget({ budget }) {
                 <div className="grid gap-6 lg:grid-cols-3">
                     
                     {/* Left Column: Categories */}
-                    <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 h-fit space-y-6">
+                    <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80 h-fit space-y-6">
                         <div>
                             <h3 className="text-lg font-bold dark:text-white">Catégories</h3>
                             <p className="text-xs text-gray-400">Visualisez les dépenses par poste budgétaire.</p>
@@ -201,7 +188,7 @@ export default function ShowBudget({ budget }) {
                         {/* Categories List */}
                         <div className="space-y-3">
                             {budget.categories.length === 0 ? (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4 bg-gray-55 dark:bg-gray-900/20 rounded-xl">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4 dark:bg-gray-900/20 rounded-xl">
                                     Aucune catégorie.
                                 </p>
                             ) : (
@@ -210,7 +197,7 @@ export default function ShowBudget({ budget }) {
                                     return (
                                         <div 
                                             key={cat.id} 
-                                            className="group flex flex-col p-3 rounded-xl border border-gray-100 dark:border-gray-750 hover:bg-gray-50 dark:hover:bg-gray-750 transition"
+                                            className="group flex flex-col p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition"
                                         >
                                             <div className="flex items-center justify-between gap-2">
                                                 <div className="flex items-center gap-2">
@@ -224,11 +211,11 @@ export default function ShowBudget({ budget }) {
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="text-sm font-bold dark:text-white">
-                                                        {cat.total_expenses.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                                        {formatMoney(cat.total_expenses)}
                                                     </span>
                                                     <button 
                                                         onClick={() => deleteCategory(cat.id, cat.name)}
-                                                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 rounded transition"
+                                                        className="sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 rounded transition"
                                                         title="Supprimer la catégorie et ses dépenses"
                                                     >
                                                         <TrashIcon className="w-4 h-4" />
@@ -263,7 +250,7 @@ export default function ShowBudget({ budget }) {
                                     placeholder="Nom (ex: Matériel, Serveurs)"
                                     value={data.category_name}
                                     onChange={(e) => setData('category_name', e.target.value)}
-                                    className="w-full rounded-lg border-gray-300 dark:border-gray-650 dark:bg-gray-700 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     required
                                 />
                                 {errors.category_name && <p className="text-red-500 text-xs mt-1">{errors.category_name}</p>}
@@ -283,7 +270,7 @@ export default function ShowBudget({ budget }) {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="px-4 py-2 rounded-lg bg-gray-900 dark:bg-gray-750 text-white text-xs font-bold hover:bg-gray-800 disabled:opacity-50 transition"
+                                    className="px-4 py-2 rounded-lg bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 disabled:opacity-50 transition"
                                 >
                                     Créer
                                 </button>
@@ -295,20 +282,20 @@ export default function ShowBudget({ budget }) {
                     <div className="lg:col-span-2 space-y-6">
                         
                         {/* Panel: Add Expense */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
                             <div>
                                 <h3 className="text-lg font-bold dark:text-white">Nouvelle dépense</h3>
-                                <p className="text-xs text-gray-400">Enregistrez un nouveau flux financier sortant.</p>
+                                <p className="text-xs text-gray-400">Catégorie et date sont conservées pour enchaîner les saisies.</p>
                             </div>
 
                             <form onSubmit={addExpense} className="mt-4 space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-455 mb-1">Catégorie *</label>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Catégorie *</label>
                                         <select
                                             value={expenseData.category_id}
                                             onChange={(e) => setExpenseData('category_id', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:border-gray-650 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                             required
                                         >
                                             <option value="">Sélectionner une catégorie</option>
@@ -320,13 +307,13 @@ export default function ShowBudget({ budget }) {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-455 mb-1">Description *</label>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Description *</label>
                                         <input
                                             type="text"
                                             placeholder="Ex: Facture AWS Juin"
                                             value={expenseData.description}
                                             onChange={(e) => setExpenseData('description', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:border-gray-650 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                             required
                                         />
                                         {errorsExpense.description && <p className="text-red-500 text-xs mt-1">{errorsExpense.description}</p>}
@@ -335,25 +322,25 @@ export default function ShowBudget({ budget }) {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-455 mb-1">Montant (€) *</label>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Montant (€) *</label>
                                         <input
                                             type="number"
                                             step="0.01"
                                             placeholder="0.00"
                                             value={expenseData.amount}
                                             onChange={(e) => setExpenseData('amount', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:border-gray-650 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                             required
                                         />
                                         {errorsExpense.amount && <p className="text-red-500 text-xs mt-1">{errorsExpense.amount}</p>}
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-455 mb-1">Date *</label>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Date *</label>
                                         <input
                                             type="date"
                                             value={expenseData.date}
                                             onChange={(e) => setExpenseData('date', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:border-gray-650 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                             required
                                         />
                                         {errorsExpense.date && <p className="text-red-500 text-xs mt-1">{errorsExpense.date}</p>}
@@ -362,24 +349,24 @@ export default function ShowBudget({ budget }) {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-455 mb-1">URL du justificatif (Reçu)</label>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">URL du justificatif (Reçu)</label>
                                         <input
                                             type="url"
                                             placeholder="https://ex.com/recu.pdf"
                                             value={expenseData.receipt_url}
                                             onChange={(e) => setExpenseData('receipt_url', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:border-gray-650 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                         />
                                         {errorsExpense.receipt_url && <p className="text-red-500 text-xs mt-1">{errorsExpense.receipt_url}</p>}
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-455 mb-1">Notes ou commentaires</label>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1">Notes ou commentaires</label>
                                         <input
                                             type="text"
                                             placeholder="Commentaire ou précisions..."
                                             value={expenseData.notes}
                                             onChange={(e) => setExpenseData('notes', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:border-gray-650 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                         />
                                         {errorsExpense.notes && <p className="text-red-500 text-xs mt-1">{errorsExpense.notes}</p>}
                                     </div>
@@ -397,10 +384,10 @@ export default function ShowBudget({ budget }) {
                         </div>
 
                         {/* Panel: Transaction History */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
                             <div>
                                 <h3 className="text-lg font-bold dark:text-white">Historique des transactions</h3>
-                                <p className="text-xs text-gray-400">Journal d'activité financière en temps réel.</p>
+                                <p className="text-xs text-gray-400">Les plus récentes en premier.</p>
                             </div>
 
                             <div className="mt-4 space-y-3 max-h-[480px] overflow-y-auto pr-1">
@@ -412,7 +399,7 @@ export default function ShowBudget({ budget }) {
                                     budget.expenses.map((exp) => (
                                         <div 
                                             key={exp.id} 
-                                            className="flex flex-col p-4 rounded-xl border border-gray-100 dark:border-gray-750 hover:shadow-sm transition bg-white dark:bg-gray-800"
+                                            className="flex flex-col p-4 rounded-xl border border-gray-100 hover:shadow-sm transition bg-white dark:bg-gray-800"
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="space-y-1">
@@ -428,18 +415,18 @@ export default function ShowBudget({ budget }) {
                                                             {exp.category}
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs text-gray-400">{exp.date}</p>
+                                                    <p className="text-xs text-gray-400">{formatShortDate(exp.date)}</p>
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <span className="font-extrabold text-sm dark:text-white text-right shrink-0">
-                                                        -{exp.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                                        -{formatMoney(exp.amount)}
                                                     </span>
                                                     <button
                                                         onClick={() => deleteExpense(exp.id)}
                                                         className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 dark:text-gray-500 dark:hover:text-red-400 transition"
                                                         title="Supprimer la transaction"
                                                     >
-                                                        <TrashIcon className="w-4.5 h-4.5" />
+                                                        <TrashIcon className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             </div>

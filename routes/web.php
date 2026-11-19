@@ -15,6 +15,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PaletteController;
 
 // page d'accueil
 Route::get('/', function () {
@@ -45,6 +46,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/palette', PaletteController::class)->name('palette');
 
     // projets
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');

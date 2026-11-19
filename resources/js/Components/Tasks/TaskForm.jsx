@@ -1,134 +1,113 @@
 import { useForm } from '@inertiajs/react';
+import Field, { Input, Textarea, Select } from '@/Components/ui/Field';
+import Button from '@/Components/ui/Button';
+import { Card } from '@/Components/ui/Card';
+import Kbd, { modKey } from '@/Components/ui/Kbd';
+import { STATUSES, PRIORITIES, normalizeStatus } from '@/lib/taskMeta';
+import { toInputDate } from '@/lib/format';
 
-export default function TaskForm({ task = null, users = [], parentTasks = [], onSubmit, submitLabel = 'Enregistrer' }) {
-    const { data, setData, errors, processing } = useForm({
+/**
+ * Formulaire de tâche (création et édition). Il soumet lui-même pour que
+ * les erreurs de validation s'affichent sous chaque champ.
+ */
+export default function TaskForm({ task = null, defaults = {}, users = [], parentTasks = [], action, method = 'post', submitLabel = 'Enregistrer', cancelHref }) {
+    const { data, setData, errors, processing, submit } = useForm({
         title: task?.title ?? '',
         description: task?.description ?? '',
         specification: task?.specification ?? '',
-        status: task?.status ?? 'todo',
+        status: normalizeStatus(task?.status ?? defaults.status ?? 'todo'),
         priority: task?.priority ?? 'medium',
-        due_date: task?.due_date ?? '',
+        due_date: toInputDate(task?.due_date),
         assignee_id: task?.assignee_id ?? '',
-        parent_task_id: task?.parent_task_id ?? '',
+        parent_task_id: task?.parent_task_id ?? defaults.parent_task_id ?? '',
     });
 
-    const submit = (e) => {
+    const onSubmit = (e) => {
         e.preventDefault();
-        onSubmit(data);
+        submit(method, action, { preserveScroll: true });
     };
 
     return (
-        <form onSubmit={submit} className="space-y-4 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow">
-            <div>
-                <label className="block text-sm font-medium mb-1 dark:text-white">Titre</label>
-                <input
-                    value={data.title}
-                    onChange={(e) => setData('title', e.target.value)}
-                    className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                />
-                {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-            </div>
+        <form onSubmit={onSubmit} className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            {/* Contenu */}
+            <Card className="space-y-5">
+                <Field label="Titre" required error={errors.title}>
+                    {(p) => (
+                        <Input
+                            {...p}
+                            autoFocus={!task}
+                            value={data.title}
+                            onChange={(e) => setData('title', e.target.value)}
+                            placeholder="Ex. Intégrer la page d'accueil"
+                            maxLength={255}
+                            className="text-base"
+                        />
+                    )}
+                </Field>
 
-            <div>
-                <label className="block text-sm font-medium mb-1 dark:text-white">Description</label>
-                <textarea
-                    value={data.description}
-                    onChange={(e) => setData('description', e.target.value)}
-                    className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                    rows={3}
-                />
-            </div>
+                <Field label="Description" optional error={errors.description} hint="Le contexte en quelques lignes : ce qu'il faut faire et pourquoi.">
+                    {(p) => <Textarea {...p} rows={4} value={data.description} onChange={(e) => setData('description', e.target.value)} />}
+                </Field>
 
-            <div>
-                <label className="block text-sm font-medium mb-1 dark:text-white">Cahier des charges</label>
-                <textarea
-                    value={data.specification}
-                    onChange={(e) => setData('specification', e.target.value)}
-                    className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                    rows={5}
-                />
-            </div>
+                <Field label="Cahier des charges" optional error={errors.specification} hint="Critères d'acceptation, liens, détails techniques…">
+                    {(p) => <Textarea {...p} rows={6} value={data.specification} onChange={(e) => setData('specification', e.target.value)} />}
+                </Field>
+            </Card>
 
-            <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-white">Etat</label>
-                    <select
-                        value={data.status}
-                        onChange={(e) => setData('status', e.target.value)}
-                        className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                    >
-                        <option value="todo">Pas commencee</option>
-                        <option value="in_progress">En cours</option>
-                        <option value="done">Terminee</option>
-                    </select>
-                </div>
+            {/* Propriétés */}
+            <div className="space-y-5">
+                <Card className="space-y-4">
+                    <Field label="Statut" error={errors.status}>
+                        {(p) => (
+                            <Select {...p} value={data.status} onChange={(e) => setData('status', e.target.value)}>
+                                {Object.entries(STATUSES).map(([k, s]) => <option key={k} value={k}>{s.label}</option>)}
+                            </Select>
+                        )}
+                    </Field>
 
-                <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-white">Priorite</label>
-                    <select
-                        value={data.priority}
-                        onChange={(e) => setData('priority', e.target.value)}
-                        className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                    >
-                        <option value="low">Faible</option>
-                        <option value="medium">Moyenne</option>
-                        <option value="high">Haute</option>
-                        <option value="critical">Critique</option>
-                    </select>
-                </div>
-            </div>
+                    <Field label="Priorité" error={errors.priority}>
+                        {(p) => (
+                            <Select {...p} value={data.priority} onChange={(e) => setData('priority', e.target.value)}>
+                                {Object.entries(PRIORITIES).map(([k, pr]) => <option key={k} value={k}>{pr.label}</option>)}
+                            </Select>
+                        )}
+                    </Field>
 
-            <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-white">Deadline</label>
-                    <input
-                        type="date"
-                        value={data.due_date}
-                        onChange={(e) => setData('due_date', e.target.value)}
-                        className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                    />
-                </div>
+                    <Field label="Échéance" optional error={errors.due_date}>
+                        {(p) => <Input {...p} type="date" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />}
+                    </Field>
 
-                <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-white">Assignee</label>
-                    <select
-                        value={data.assignee_id}
-                        onChange={(e) => setData('assignee_id', e.target.value)}
-                        className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                    >
-                        <option value="">Non attribuee</option>
-                        {users.map((user) => (
-                            <option key={user.id} value={user.id}>
-                                {user.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                    <Field label="Assignée à" error={errors.assignee_id}>
+                        {(p) => (
+                            <Select {...p} value={data.assignee_id} onChange={(e) => setData('assignee_id', e.target.value)}>
+                                <option value="">Personne</option>
+                                {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
+                            </Select>
+                        )}
+                    </Field>
 
-                <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-white">Sous-tache de</label>
-                    <select
-                        value={data.parent_task_id}
-                        onChange={(e) => setData('parent_task_id', e.target.value)}
-                        className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                    >
-                        <option value="">Aucune</option>
-                        {parentTasks.map((parentTask) => (
-                            <option key={parentTask.id} value={parentTask.id}>
-                                {parentTask.title}
-                            </option>
-                        ))}
-                    </select>
+                    <Field label="Sous-tâche de" optional error={errors.parent_task_id}>
+                        {(p) => (
+                            <Select {...p} value={data.parent_task_id ?? ''} onChange={(e) => setData('parent_task_id', e.target.value)}>
+                                <option value="">Aucune (tâche principale)</option>
+                                {parentTasks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+                            </Select>
+                        )}
+                    </Field>
+                </Card>
+
+                <div className="flex flex-col gap-2 sm:flex-row-reverse lg:flex-col">
+                    <Button type="submit" loading={processing} className="w-full sm:w-auto lg:w-full">
+                        {submitLabel}
+                    </Button>
+                    {cancelHref && (
+                        <Button variant="secondary" href={cancelHref} className="w-full sm:w-auto lg:w-full">Annuler</Button>
+                    )}
+                    <p className="hidden items-center justify-center gap-1 text-xs text-gray-400 lg:flex">
+                        <Kbd>{modKey}</Kbd><Kbd>↵</Kbd> pour enregistrer
+                    </p>
                 </div>
             </div>
-
-            <button
-                type="submit"
-                disabled={processing}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-                {submitLabel}
-            </button>
         </form>
     );
 }

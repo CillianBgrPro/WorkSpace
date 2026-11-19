@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import CreateProjectModal from '@/Components/Projects/CreateProjectModal';
+import { confirmDelete } from '@/Components/ui/ConfirmDialog';
 import {
     PlusIcon, FolderIcon, UsersIcon, ChevronRightIcon,
     TrashIcon, ArrowRightOnRectangleIcon, SparklesIcon,
@@ -10,9 +11,10 @@ import {
 export default function ProjectsIndex({ projects, auth }) {
     const [showModal, setShowModal] = useState(false);
 
-    const handleDelete = (project) => {
-        if (!confirm(`Supprimer le projet "${project.name}" ? Cette action est irréversible.`)) return;
-        router.delete(route('projects.destroy', project.id));
+    const handleDelete = async (project) => {
+        if (await confirmDelete(`le projet « ${project.name} »`, 'Toutes ses tâches, budgets, événements et fichiers seront supprimés pour tous les membres. Cette action est définitive.')) {
+            router.delete(route('projects.destroy', project.id));
+        }
     };
 
     const activeProjects = projects.filter(p => p.status === 'active');

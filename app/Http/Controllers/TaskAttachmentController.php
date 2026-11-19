@@ -30,7 +30,7 @@ class TaskAttachmentController extends Controller
         $attachment->size = $file->getSize();
         $attachment->save();
 
-        return redirect()->route('tasks.show', $task)->with('success', 'Fichier ajoute avec succes.');
+        return redirect()->route('tasks.show', $task)->with('success', 'Fichier ajouté.');
     }
 
     public function destroy(Request $request, TaskAttachment $attachment)
@@ -43,6 +43,6 @@ class TaskAttachmentController extends Controller
         $task = $attachment->task;
         $attachment->delete();
 
-        return redirect()->route('tasks.show', $task)->with('success', 'Fichier supprime.');
+        return redirect()->route('tasks.show', $task)->with('success', 'Fichier supprimé.');
     }
 }

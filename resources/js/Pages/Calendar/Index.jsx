@@ -1,14 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { PlusIcon } from '@heroicons/react/20/solid';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import frLocale from '@fullcalendar/core/locales/fr';
-import { router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import EventModal from '@/Components/Calendar/EventModal';
 import useMediaQuery from '@/hooks/useMediaQuery';
+import PageHeader from '@/Components/ui/PageHeader';
+import Button from '@/Components/ui/Button';
+import { toast } from '@/Components/ui/Toaster';
+
+const localDate = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 export default function CalendarIndex({ events, users, teams }) {
     const { auth } = usePage().props;
@@ -20,9 +29,18 @@ export default function CalendarIndex({ events, users, teams }) {
     const isCompact = useMediaQuery('(max-width: 1023px)');
 
 
-    const handleDateClick = (info) => {
-        setModal({ open: true, event: null, dateStr: info.dateStr });
-    };
+    const openNew = (dateStr = localDate()) => setModal({ open: true, event: null, dateStr: dateStr.slice(0, 10) });
+
+    // « Nouvel événement » depuis la palette ou le dashboard : /calendar?new=1
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('new')) {
+            openNew();
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    }, []);
+
+    const handleDateClick = (info) => openNew(info.dateStr);
 
 
     const handleEventClick = (info) => {
@@ -43,38 +61,34 @@ export default function CalendarIndex({ events, users, teams }) {
     };
 
 
-    const handleEventDrop = async (info) => {
-        try {
-            await router.patch(route('calendar.move', info.event.id), {
-                start_at: info.event.startStr,
-                end_at: info.event.endStr || null,
-            }, { preserveScroll: true });
-            setAnnounce('Événement déplacé avec succès');
-        } catch (error) {
-            console.error('Erreur lors du déplacement de l’événement :', error);
-            if (typeof toast === 'function') {
+    const handleEventDrop = (info) => {
+        router.patch(route('calendar.move', info.event.id), {
+            start_at: info.event.startStr,
+            end_at: info.event.endStr || null,
+        }, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => setAnnounce('Événement déplacé'),
+            onError: () => {
+                info.revert();
                 toast.error('Impossible de déplacer cet événement.');
-            }
-            setAnnounce('Erreur lors du déplacement de l’événement');
-            info.revert();
-        }
+            },
+        });
     };
 
     return (
         <AppLayout header="Calendrier">
+            <Head title="Calendrier" />
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-3 md:p-6">
+            <PageHeader
+                title="Calendrier"
+                description={isMobile ? 'Touchez un jour pour y ajouter un événement.' : 'Cliquez sur un jour pour ajouter un événement, glissez-déposez pour le déplacer.'}
+                actions={<Button icon={PlusIcon} onClick={() => openNew()}>Nouvel événement</Button>}
+            />
+
+            <div className="rounded-xl border border-gray-200/80 bg-white p-3 shadow-sm md:p-5">
 
                 <div className="sr-only" aria-live="assertive" role="status">{announce}</div>
-                {isMobile && (
-                    <button
-                        type="button"
-                        onClick={() => setModal({ open: true, event: null, dateStr: new Date().toISOString().slice(0, 10) })}
-                        className="mb-3 w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
-                    >
-                        + Nouvel événement
-                    </button>
-                )}
                 <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
                     locale={frLocale}

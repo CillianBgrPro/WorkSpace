@@ -75,12 +75,35 @@ class DashboardController extends Controller
         // ── Prochaines échéances ──────────────────────────────────────────
         $upcomingTasks = Task::where('project_id', $project->id)
             ->whereNotNull('due_date')
-            ->where('due_date', '>=', now())
+            ->whereNotIn('status', ['done', 'completed'])
+            ->whereDate('due_date', '>=', now()->toDateString())
             ->orderBy('due_date', 'asc')
             ->limit(5)
-            ->get(['id', 'title', 'due_date']);
+            ->get(['id', 'title', 'due_date', 'priority', 'status']);
+
+        // ── Mes tâches & retards ──────────────────────────────────────────
+        $openStatuses = ['todo', 'in_progress', 'doing'];
+
+        $myTasks = Task::where('project_id', $project->id)
+            ->where('assignee_id', auth()->id())
+            ->whereIn('status', $openStatuses)
+            ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('due_date')
+            ->limit(6)
+            ->get(['id', 'title', 'status', 'priority', 'due_date']);
+
+        $overdueTasks = Task::where('project_id', $project->id)
+            ->whereIn('status', $openStatuses)
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '<', now()->toDateString())
+            ->count();
+
+        $inProgressTasks = Task::where('project_id', $project->id)
+            ->whereIn('status', ['in_progress', 'doing'])
+            ->count();
 
         return Inertia::render('Dashboard', [
+            'myTasks'           => $myTasks,
             'stats' => [
                 'totalTasks'      => $totalTasks,
                 'completedTasks'  => $completedTasks,
@@ -90,6 +113,9 @@ class DashboardController extends Controller
                 'spentBudget'     => $spentBudget,
                 'remainingBudget' => $remainingBudget,
                 'budgetProgress'  => $budgetProgress,
+                'overdueTasks'    => $overdueTasks,
+                'inProgressTasks' => $inProgressTasks,
+                'hasBudget'       => (bool) $budget,
             ],
             'recentActivities' => [
                 'tasks'    => $recentTasks,

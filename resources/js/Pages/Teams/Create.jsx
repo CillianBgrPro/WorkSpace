@@ -1,11 +1,12 @@
-import AppLayout from '@/Layouts/AppLayout';
 import { Head, useForm } from '@inertiajs/react';
+import AppLayout from '@/Layouts/AppLayout';
+import PageHeader from '@/Components/ui/PageHeader';
+import Button from '@/Components/ui/Button';
+import { Card } from '@/Components/ui/Card';
+import Field, { Input, Textarea } from '@/Components/ui/Field';
 
 export default function TeamCreate() {
-    const { data, setData, post, processing, errors } = useForm({
-        name: '',
-        description: '',
-    });
+    const { data, setData, post, processing, errors } = useForm({ name: '', description: '' });
 
     const submit = (e) => {
         e.preventDefault();
@@ -13,37 +14,27 @@ export default function TeamCreate() {
     };
 
     return (
-        <AppLayout header="Nouvelle equipe">
-            <Head title="Nouvelle equipe" />
+        <AppLayout header="Nouvelle équipe">
+            <Head title="Nouvelle équipe" />
+            <PageHeader
+                title="Nouvelle équipe"
+                description="Vous pourrez ajouter les membres juste après."
+                back={{ href: '/teams', label: 'Équipes' }}
+            />
 
-            <form onSubmit={submit} className="space-y-4 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow">
-                <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-white">Nom de l'equipe</label>
-                    <input
-                        value={data.name}
-                        onChange={(e) => setData('name', e.target.value)}
-                        className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                    />
-                    {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+            <form onSubmit={submit} className="max-w-2xl space-y-5">
+                <Card className="space-y-5">
+                    <Field label="Nom de l'équipe" required error={errors.name}>
+                        {(p) => <Input {...p} autoFocus value={data.name} onChange={(e) => setData('name', e.target.value)} placeholder="Ex. Front-end" />}
+                    </Field>
+                    <Field label="Description" optional error={errors.description}>
+                        {(p) => <Textarea {...p} rows={3} value={data.description} onChange={(e) => setData('description', e.target.value)} placeholder="Rôle de l'équipe dans le projet" />}
+                    </Field>
+                </Card>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button variant="secondary" href="/teams">Annuler</Button>
+                    <Button type="submit" loading={processing}>Créer l'équipe</Button>
                 </div>
-
-                <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-white">Description</label>
-                    <textarea
-                        value={data.description}
-                        onChange={(e) => setData('description', e.target.value)}
-                        className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
-                        rows={4}
-                    />
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={processing}
-                    className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
-                    Créer l'equipe
-                </button>
             </form>
         </AppLayout>
     );

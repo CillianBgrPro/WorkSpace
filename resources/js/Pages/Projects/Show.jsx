@@ -1,163 +1,131 @@
-import { useState } from 'react';
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
+import { Head, useForm, router } from '@inertiajs/react';
+import { UserPlusIcon, XMarkIcon, EnvelopeIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import AppLayout from '@/Layouts/AppLayout';
-import {
-    UserPlusIcon, TrashIcon, ArrowLeftIcon, ChevronRightIcon,
-    ShieldCheckIcon, UserIcon, EnvelopeIcon
-} from '@heroicons/react/24/outline';
+import PageHeader from '@/Components/ui/PageHeader';
+import Button from '@/Components/ui/Button';
+import { Card, CardHeader } from '@/Components/ui/Card';
+import { Input, FieldError } from '@/Components/ui/Field';
+import Avatar from '@/Components/ui/Avatar';
+import { Badge } from '@/Components/ui/Badge';
+import { confirmDialog } from '@/Components/ui/ConfirmDialog';
 
 export default function ProjectShow({ project }) {
-    const [showAddForm, setShowAddForm] = useState(false);
+    const [inviting, setInviting] = useState(false);
+    const inputRef = useRef(null);
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm({ email: '' });
+    const members = project.members ?? [];
 
-    const { data, setData, post, processing, errors, reset } = useForm({
-        email: '',
-    });
+    // Ouverture directe du formulaire depuis la palette / le dashboard (?invite=1).
+    useEffect(() => {
+        if (project.is_owner && new URLSearchParams(window.location.search).get('invite')) {
+            setInviting(true);
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    }, []);
+
+    useEffect(() => { if (inviting) inputRef.current?.focus(); }, [inviting]);
 
     const addMember = (e) => {
         e.preventDefault();
         post(route('projects.members.add', project.id), {
-            onSuccess: () => {
-                reset();
-                setShowAddForm(false);
-            },
+            preserveScroll: true,
+            onSuccess: () => { reset(); inputRef.current?.focus(); },
         });
     };
 
-    const removeMember = (userId, userName) => {
-        if (!confirm(`Retirer ${userName} du projet ?`)) return;
-        router.delete(route('projects.members.remove', { project: project.id, user: userId }));
+    const removeMember = async (member) => {
+        const ok = await confirmDialog({
+            title: `Retirer ${member.name} du projet ?`,
+            message: "Cette personne n'aura plus accès aux tâches, au budget ni aux fichiers du projet.",
+            confirmLabel: 'Retirer',
+            danger: true,
+        });
+        if (ok) router.delete(route('projects.members.remove', { project: project.id, user: member.id }), { preserveScroll: true });
     };
 
     return (
-        <AppLayout header={`Projet : ${project.name}`}>
-            <Head title={`Gérer — ${project.name}`} />
+        <AppLayout header="Membres">
+            <Head title={`Membres — ${project.name}`} />
 
-            <div className="max-w-2xl mx-auto space-y-6">
-
-                {/* Retour */}
-                <Link
-                    href={route('projects.index')}
-                    className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition"
-                >
-                    <ArrowLeftIcon className="w-4 h-4" />
-                    Retour aux projets
-                </Link>
-
-                {/* Infos projet */}
-                <div className="bg-white rounded-xl shadow p-4 sm:p-6 border-l-4" style={{ borderColor: project.color }}>
-                    <div className="flex items-center gap-4 mb-4">
-                        <div
-                            className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl"
-                            style={{ backgroundColor: project.color }}
-                        >
-                            {project.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-gray-800">{project.name}</h2>
-                            {project.description && (
-                                <p className="text-gray-500 text-sm">{project.description}</p>
-                            )}
-                        </div>
-                    </div>
-
-                    <Link
-                            href={route('projects.dashboard', project.id)}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium text-sm transition"
-                            style={{ backgroundColor: project.color }}
-                        >
-                            Ouvrir le dashboard
-                            <ChevronRightIcon className="w-4 h-4" />
-                        </Link>
-                </div>
-
-                {/* Membres */}
-                <div className="bg-white rounded-xl shadow p-4 sm:p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-800">
-                            Membres ({project.members?.length ?? 0})
-                        </h3>
-                        {project.is_owner && (
-                            <button
-                                onClick={() => setShowAddForm(!showAddForm)}
-                                className="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition"
-                            >
-                                <UserPlusIcon className="w-4 h-4" />
-                                Ajouter un membre
-                            </button>
+            <PageHeader
+                title="Membres du projet"
+                description={project.description || project.name}
+                actions={
+                    <>
+                        <Button variant="secondary" href={route('projects.dashboard', project.id)} iconRight={ArrowRightIcon}>Dashboard</Button>
+                        {project.is_owner && !inviting && (
+                            <Button icon={UserPlusIcon} onClick={() => setInviting(true)}>Inviter</Button>
                         )}
-                    </div>
+                    </>
+                }
+            />
 
-                    {/* Formulaire ajout membre */}
-                    {showAddForm && project.is_owner && (
-                        <form onSubmit={addMember} className="flex gap-2 mb-5 p-4 bg-indigo-50 rounded-lg">
-                            <div className="flex-1">
-                                <div className="relative">
-                                    <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
+            <div className="max-w-3xl space-y-5">
+                {inviting && project.is_owner && (
+                    <Card className="border-indigo-200 bg-indigo-50/40">
+                        <form onSubmit={addMember}>
+                            <label htmlFor="invite-email" className="mb-1.5 block text-sm font-medium text-gray-700">
+                                Adresse e-mail de la personne à inviter
+                            </label>
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                                <div className="relative flex-1">
+                                    <EnvelopeIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <Input
+                                        ref={inputRef}
+                                        id="invite-email"
                                         type="email"
                                         value={data.email}
-                                        onChange={e => setData('email', e.target.value)}
-                                        placeholder="email@exemple.com"
-                                        className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        onChange={(e) => setData('email', e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Escape') { setInviting(false); clearErrors(); } }}
+                                        placeholder="prenom.nom@exemple.com"
+                                        error={errors.email}
+                                        className="pl-9"
+                                        required
                                     />
                                 </div>
-                                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                <div className="flex gap-2">
+                                    <Button variant="secondary" onClick={() => { setInviting(false); reset(); clearErrors(); }} className="flex-1 sm:flex-none">Annuler</Button>
+                                    <Button type="submit" loading={processing} className="flex-1 sm:flex-none">Ajouter</Button>
+                                </div>
                             </div>
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition"
-                            >
-                                {processing ? '...' : 'Inviter'}
-                            </button>
+                            <FieldError>{errors.email}</FieldError>
+                            <p className="mt-2 text-xs text-gray-500">La personne doit déjà avoir un compte WorkSpace.</p>
                         </form>
-                    )}
+                    </Card>
+                )}
 
-                    {/* Liste membres */}
-                    <ul className="divide-y divide-gray-100">
-                        {(project.members ?? []).map(member => {
-                            const isOwnerMember = member.id === project.owner_id;
-                            const pivotRole = member.pivot?.role;
+                <Card>
+                    <CardHeader title={`${members.length} membre${members.length > 1 ? 's' : ''}`} />
+                    <ul className="-mx-2 divide-y divide-gray-100">
+                        {members.map((member) => {
+                            const isOwner = member.id === project.owner_id || member.pivot?.role === 'owner';
                             return (
-                                <li key={member.id} className="flex items-center justify-between py-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                            {member.name.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-gray-800 text-sm">{member.name}</p>
-                                            <p className="text-gray-400 text-xs">{member.email}</p>
-                                        </div>
+                                <li key={member.id} className="group flex items-center gap-3 px-2 py-3">
+                                    <Avatar name={member.name} size="lg" />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium text-gray-900">{member.name}</p>
+                                        <p className="truncate text-xs text-gray-500">{member.email}</p>
                                     </div>
-
-                                    <div className="flex items-center gap-2">
-                                        {isOwnerMember || pivotRole === 'owner' ? (
-                                            <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium">
-                                                <ShieldCheckIcon className="w-3 h-3" />
-                                                Propriétaire
-                                            </span>
-                                        ) : (
-                                            <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
-                                                <UserIcon className="w-3 h-3" />
-                                                Membre
-                                            </span>
-                                        )}
-
-                                        {project.is_owner && !isOwnerMember && (
-                                            <button
-                                                onClick={() => removeMember(member.id, member.name)}
-                                                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                                                title="Retirer du projet"
-                                            >
-                                                <TrashIcon className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
+                                    {isOwner
+                                        ? <Badge className="bg-indigo-50 text-indigo-700 ring-indigo-200">Propriétaire</Badge>
+                                        : <Badge>Membre</Badge>}
+                                    {project.is_owner && !isOwner && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeMember(member)}
+                                            className="rounded-md p-1.5 text-gray-400 transition hover:bg-rose-50 hover:text-rose-600 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                                            title="Retirer du projet"
+                                            aria-label={`Retirer ${member.name}`}
+                                        >
+                                            <XMarkIcon className="h-4 w-4" />
+                                        </button>
+                                    )}
                                 </li>
                             );
                         })}
                     </ul>
-                </div>
+                </Card>
             </div>
         </AppLayout>
     );

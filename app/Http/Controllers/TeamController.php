@@ -32,7 +32,8 @@ class TeamController extends Controller
         // Uniquement les équipes du projet actif
         $teams = Team::where('project_id', $project->id)
             ->withCount('members')
-            ->with('owner')
+            ->with(['owner:id,name', 'members:id,name'])
+            ->orderBy('name')
             ->get();
 
         return Inertia::render('Teams/index', [
@@ -72,7 +73,8 @@ class TeamController extends Controller
         // le créateur devient admin de sa team
         $team->members()->attach(auth()->id(), ['role' => 'admin']);
 
-        return redirect()->route('teams.index')->with('success', 'Equipe créée avec succès.');
+        // On enchaîne directement sur l'ajout des membres.
+        return redirect()->route('teams.edit', $team)->with('success', 'Équipe créée. Ajoutez maintenant ses membres.');
     }
 
     public function edit(Request $request, Team $team)
@@ -109,7 +111,7 @@ class TeamController extends Controller
         $team->description = $data['description'] ?? null;
         $team->save();
 
-        return redirect()->route('teams.index')->with('success', 'Equipe mise à jour.');
+        return redirect()->route('teams.index')->with('success', 'Équipe mise à jour.');
     }
 
     public function destroy(Request $request, Team $team)
@@ -125,7 +127,7 @@ class TeamController extends Controller
 
         $team->delete();
 
-        return redirect()->route('teams.index')->with('success', 'Equipe supprimée.');
+        return redirect()->route('teams.index')->with('success', 'Équipe supprimée.');
     }
 
     public function addMember(Request $request, Team $team)

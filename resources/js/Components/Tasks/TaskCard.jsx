@@ -1,35 +1,39 @@
 import { Link } from '@inertiajs/react';
+import { Bars3BottomLeftIcon, RectangleStackIcon } from '@heroicons/react/16/solid';
+import { DueBadge, PriorityBadge } from '@/Components/ui/Badge';
+import Avatar from '@/Components/ui/Avatar';
+import { isDone } from '@/lib/taskMeta';
 
-const labels = {
-    todo: 'Pas commencee',
-    in_progress: 'En cours',
-    done: 'Terminee',
-    low: 'Faible',
-    medium: 'Moyenne',
-    high: 'Haute',
-    critical: 'Critique',
-};
+/** Carte de tâche (kanban) : titre, priorité, échéance, assigné. */
+export default function TaskCard({ task, dragging = false }) {
+    const done = isDone(task.status);
 
-export default function TaskCard({ task }) {
     return (
         <Link
             href={`/tasks/${task.id}`}
-            className="block bg-white dark:bg-gray-800 p-4 rounded-xl shadow hover:shadow-md transition"
+            className={`block rounded-lg border bg-white p-3 shadow-sm transition hover:border-indigo-300 hover:shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 ${
+                dragging ? 'rotate-1 border-indigo-300 opacity-60' : 'border-gray-200'
+            }`}
         >
-            <div className="flex items-start justify-between gap-3">
-                <h3 className="font-semibold text-gray-900 dark:text-white">{task.title}</h3>
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 dark:text-gray-200">
-                    {labels[task.priority]}
+            <p className={`text-sm font-medium leading-snug ${done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{task.title}</p>
+
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                <PriorityBadge priority={task.priority} compact />
+                {task.due_date && <DueBadge date={task.due_date} done={done} />}
+                {task.description && (
+                    <span title="Contient une description" className="text-gray-300">
+                        <Bars3BottomLeftIcon className="h-3.5 w-3.5" />
+                    </span>
+                )}
+                {task.subtasks_count > 0 && (
+                    <span title={`${task.subtasks_count} sous-tâche(s)`} className="inline-flex items-center gap-0.5 text-xs text-gray-400">
+                        <RectangleStackIcon className="h-3.5 w-3.5" />
+                        {task.subtasks_count}
+                    </span>
+                )}
+                <span className="ml-auto">
+                    {task.assignee ? <Avatar name={task.assignee.name} size="sm" title={`Assignée à ${task.assignee.name}`} /> : null}
                 </span>
-            </div>
-
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                {task.description || 'Aucune description'}
-            </p>
-
-            <div className="mt-3 flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
-                <span>{labels[task.status]}</span>
-                <span>{task.due_date ? `Échéance : ${new Date(task.due_date).toLocaleDateString('fr-FR')}` : 'Sans échéance'}</span>
             </div>
         </Link>
     );

@@ -1,96 +1,82 @@
-import { useForm, router } from '@inertiajs/react';
+import { useForm, router, usePage } from '@inertiajs/react';
+import { ChatBubbleLeftRightIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Card, CardHeader } from '@/Components/ui/Card';
+import Avatar from '@/Components/ui/Avatar';
+import Button from '@/Components/ui/Button';
+import { Textarea, FieldError } from '@/Components/ui/Field';
+import { confirmDelete } from '@/Components/ui/ConfirmDialog';
+import { modKey } from '@/Components/ui/Kbd';
+import { formatDateTime, formatRelative } from '@/lib/format';
 
 export default function TaskComments({ task }) {
     const comments = task.comments ?? [];
-
-    const { data, setData, post, processing, errors, reset } = useForm({
-        body: '',
-    });
+    const user = usePage().props.auth?.user;
+    const { data, setData, post, processing, errors, reset } = useForm({ body: '' });
 
     const submit = (e) => {
         e.preventDefault();
-
+        if (!data.body.trim()) return;
         post(route('tasks.comments.store', task.id), {
+            preserveScroll: true,
             onSuccess: () => reset('body'),
         });
     };
 
-    const removeComment = (commentId) => {
-        if (confirm('Supprimer ce commentaire ?')) {
-            router.delete(route('comments.destroy', commentId));
+    const removeComment = async (commentId) => {
+        if (await confirmDelete('ce commentaire')) {
+            router.delete(route('comments.destroy', commentId), { preserveScroll: true });
         }
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow space-y-4">
-            <h3 className="font-semibold dark:text-white">
-                Commentaires ({comments.length})
-            </h3>
+        <Card>
+            <CardHeader title={`Commentaires${comments.length ? ` · ${comments.length}` : ''}`} icon={ChatBubbleLeftRightIcon} />
 
-            {/* Formulaire */}
-            <form onSubmit={submit} className="space-y-3">
-                <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-white">
-                        Ajouter un commentaire
-                    </label>
-                    <textarea
+            {comments.length > 0 && (
+                <ul className="mb-5 space-y-4">
+                    {comments.map((comment) => (
+                        <li key={comment.id} className="group flex gap-3">
+                            <Avatar name={comment.user?.name ?? '?'} size="md" />
+                            <div className="min-w-0 flex-1">
+                                <div className="flex items-baseline gap-2">
+                                    <p className="text-sm font-semibold text-gray-900">{comment.user?.name}</p>
+                                    <time className="text-xs text-gray-400" title={formatDateTime(comment.created_at)}>{formatRelative(comment.created_at)}</time>
+                                    {comment.can_delete && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeComment(comment.id)}
+                                            className="ml-auto rounded p-1 text-gray-300 opacity-100 transition hover:text-rose-600 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+                                            aria-label="Supprimer le commentaire"
+                                        >
+                                            <TrashIcon className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="mt-0.5 whitespace-pre-wrap text-sm text-gray-700">{comment.body}</p>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            <form onSubmit={submit} className="flex gap-3">
+                <Avatar name={user?.name ?? ''} size="md" className="hidden sm:inline-flex" />
+                <div className="min-w-0 flex-1">
+                    <Textarea
                         value={data.body}
                         onChange={(e) => setData('body', e.target.value)}
-                        rows={3}
-                        className="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                        rows={2}
+                        placeholder={comments.length ? 'Répondre…' : 'Écrire le premier commentaire…'}
+                        aria-label="Nouveau commentaire"
+                        error={errors.body}
                     />
-                    {errors.body && (
-                        <p className="text-red-500 text-sm mt-1">{errors.body}</p>
-                    )}
+                    <FieldError>{errors.body}</FieldError>
+                    <div className="mt-2 flex items-center justify-end gap-3">
+                        <span className="hidden text-xs text-gray-400 sm:inline">{modKey} + Entrée pour envoyer</span>
+                        <Button type="submit" size="sm" loading={processing} disabled={!data.body.trim()}>Commenter</Button>
+                    </div>
                 </div>
-
-                <button
-                    type="submit"
-                    disabled={processing || !data.body}
-                    className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                >
-                    {processing ? 'Publication...' : 'Publier'}
-                </button>
             </form>
-
-            {/* Liste des commentaires */}
-            {comments.length > 0 ? (
-                <div className="space-y-4">
-                    {comments.map((comment) => (
-                        <div
-                            key={comment.id}
-                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
-                        >
-                            <div className="flex justify-between items-center mb-1">
-                                <p className="text-sm font-semibold dark:text-white">
-                                    {comment.user.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    {comment.created_at}
-                                </p>
-                            </div>
-
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                                {comment.body}
-                            </p>
-
-                            {comment.can_delete && (
-                                <button
-                                    type="button"
-                                    onClick={() => removeComment(comment.id)}
-                                    className="mt-2 text-xs text-red-600 hover:text-red-700"
-                                >
-                                    Supprimer
-                                </button>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Aucun commentaire pour le moment.
-                </p>
-            )}
-        </div>
+        </Card>
     );
 }
