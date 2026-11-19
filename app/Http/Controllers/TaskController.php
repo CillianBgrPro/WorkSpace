@@ -185,7 +185,7 @@ class TaskController extends Controller
             'assignee_id'    => 'nullable|exists:users,id',
             'assignee_ids'   => 'nullable|array',
             'assignee_ids.*' => 'integer|exists:users,id',
-            'parent_task_id' => 'nullable|exists:tasks,id',
+            'parent_task_id' => ['nullable', \Illuminate\Validation\Rule::exists('tasks', 'id')->where('project_id', $project->id)->whereNull('deleted_at')],
             'recurrence'     => 'nullable|in:daily,weekly,monthly',
         ]);
 
@@ -273,7 +273,7 @@ class TaskController extends Controller
             'assignee_id'    => 'nullable|exists:users,id',
             'assignee_ids'   => 'nullable|array',
             'assignee_ids.*' => 'integer|exists:users,id',
-            'parent_task_id' => 'nullable|exists:tasks,id',
+            'parent_task_id' => ['nullable', \Illuminate\Validation\Rule::exists('tasks', 'id')->where('project_id', $project->id)->whereNull('deleted_at')],
             'recurrence'     => 'nullable|in:daily,weekly,monthly',
         ]);
 
@@ -284,7 +284,11 @@ class TaskController extends Controller
         $task->priority       = $data['priority'];
         $task->due_date       = $data['due_date'] ?? null;
         $task->assignee_id    = $data['assignee_id'] ?? null;
-        $task->parent_task_id = $data['parent_task_id'] ?? null;
+        $parentId = $data['parent_task_id'] ?? null;
+        if ($parentId && ((int) $parentId === $task->id || in_array((int) $parentId, \App\Support\Trash::descendants($task), true))) {
+            return back()->withErrors(['parent_task_id' => 'Une tâche ne peut pas être rattachée à elle-même ni à une de ses sous-tâches.']);
+        }
+        $task->parent_task_id = $parentId;
         $task->recurrence     = $data['recurrence'] ?? null;
         $this->applyAssignees($task, $project, $data);
         $task->save();

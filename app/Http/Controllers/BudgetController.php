@@ -63,19 +63,22 @@ class BudgetController extends Controller
 
     public function store(Request $request)
     {
+        $project = $this->getActiveProject();
+        abort_unless($project && $project->canEdit(auth()->user()), 403);
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'amount' => 'required|numeric|min:0',
-            'alert_threshold_percentage' => 'nullable|numeric',
-            'status' => 'required|string',
+            'amount' => 'required|numeric|min:0|max:999999999',
+            'alert_threshold_percentage' => 'nullable|numeric|min:0|max:100',
+            'status' => 'required|in:active,archived',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date',
         ]);
 
         $budget = new Budget();
         $budget->user_id = auth()->id();
-        $budget->project_id = session('active_project_id');
+        $budget->project_id = $project->id;
         $budget->name = $data['name'];
         $budget->description = $data['description'] ?? null;
         $budget->amount = $data['amount'];

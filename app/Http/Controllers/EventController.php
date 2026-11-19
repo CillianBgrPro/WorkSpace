@@ -115,11 +115,14 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
+        $project = $this->getActiveProject();
+        abort_unless($project && $project->canEdit(auth()->user()), 403);
+
         $data = $request->validate([
             'title'            => 'required|string|max:255',
             'description'      => 'nullable|string',
             'type'             => 'required|in:event,meeting,deadline',
-            'color'            => 'nullable|string',
+            'color'            => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{3,8}$/'],
             'start_at'         => 'required|date',
             'end_at'           => 'nullable|date',
             'all_day'          => 'boolean',
@@ -131,19 +134,11 @@ class EventController extends Controller
             'teams.*'          => 'exists:teams,id',
         ]);
 
-        // verif que les teams appartiennent bien a l'user
-        $userTeamIds = auth()->user()->teams()->pluck('teams.id')->toArray();
-        if (!empty($data['teams'])) {
-            foreach ($data['teams'] as $teamId) {
-                if (!in_array($teamId, $userTeamIds)) {
-                    abort(403);
-                }
-            }
-        }
+        $this->assertBelongsToProject($data, $project);
 
         $event = new Event();
         $event->user_id = auth()->id();
-        $event->project_id = session('active_project_id');
+        $event->project_id = $project->id;
         $event->title = $data['title'];
         $event->description = $data['description'] ?? null;
         $event->type = $data['type'];
@@ -166,6 +161,20 @@ class EventController extends Controller
         return back()->with('success', 'Événement créé.');
     }
 
+    /** Participants et équipes doivent appartenir au projet de l'événement. */
+    private function assertBelongsToProject(array $data, ?Project $project): void
+    {
+        abort_unless($project, 403);
+        $memberIds = $project->members()->pluck('users.id')->push($project->owner_id)->map(fn ($id) => (int) $id);
+        foreach ($data['participants'] ?? [] as $id) {
+            abort_unless($memberIds->contains((int) $id), 422, 'Participant hors du projet.');
+        }
+        $teamIds = \App\Models\Team::where('project_id', $project->id)->pluck('id')->map(fn ($id) => (int) $id);
+        foreach ($data['teams'] ?? [] as $id) {
+            abort_unless($teamIds->contains((int) $id), 422, 'Équipe hors du projet.');
+        }
+    }
+
     public function update(Request $request, Event $event)
     {
         if ($event->user_id != auth()->id()) {
@@ -176,7 +185,7 @@ class EventController extends Controller
             'title'            => 'required|string|max:255',
             'description'      => 'nullable|string',
             'type'             => 'required|in:event,meeting,deadline',
-            'color'            => 'nullable|string',
+            'color'            => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{3,8}$/'],
             'start_at'         => 'required|date',
             'end_at'           => 'nullable|date',
             'all_day'          => 'boolean',
@@ -188,14 +197,7 @@ class EventController extends Controller
             'teams.*'          => 'exists:teams,id',
         ]);
 
-        $userTeamIds = auth()->user()->teams()->pluck('teams.id')->toArray();
-        if (!empty($data['teams'])) {
-            foreach ($data['teams'] as $teamId) {
-                if (!in_array($teamId, $userTeamIds)) {
-                    abort(403);
-                }
-            }
-        }
+        $this->assertBelongsToProject($data, $event->project);
 
         $event->title = $data['title'];
         $event->description = $data['description'] ?? null;

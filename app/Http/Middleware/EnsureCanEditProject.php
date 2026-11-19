@@ -21,7 +21,15 @@ class EnsureCanEditProject
         }
 
         $project = Project::find(session('active_project_id'));
-        if ($project && $request->user() && $project->isMember($request->user()) && !$project->canEdit($request->user())) {
+
+        // Projet actif dont on n'est plus membre (retiré, ou projet supprimé) : on oublie la session.
+        if ($request->user() && (!$project || !$project->isMember($request->user()))) {
+            session()->forget(['active_project_id', 'active_project_name', 'active_project_color']);
+
+            return redirect()->route('projects.index')->with('error', "Vous n'avez plus accès à ce projet.");
+        }
+
+        if (!$project->canEdit($request->user())) {
             if ($request->isMethodSafe()) {
                 return redirect()->back(fallback: route('projects.dashboard', $project))
                     ->with('error', 'Vous avez un accès en lecture seule à ce projet.');

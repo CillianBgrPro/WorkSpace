@@ -137,9 +137,12 @@ class TeamController extends Controller
             abort(403);
         }
 
+        $memberIds = $project->members()->pluck('users.id')->push($project->owner_id)->all();
         $data = $request->validate([
-            'member_id' => 'required|exists:users,id',
-            'role'      => 'required|string',
+            'member_id' => ['required', 'integer', \Illuminate\Validation\Rule::in($memberIds)],
+            'role'      => 'required|in:admin,chef_projet,collaborateur',
+        ], [
+            'member_id.in' => 'Seuls les membres du projet peuvent rejoindre une équipe.',
         ]);
 
         $team->members()->syncWithoutDetaching([

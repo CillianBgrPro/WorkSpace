@@ -18,13 +18,16 @@ class ExpenseController extends Controller
 
         $data = $request->validate([
             'description' => 'required|string|max:255',
-            'amount'      => 'required|numeric|min:0',
+            'amount'      => 'required|numeric|min:0|max:999999999',
             'date'        => 'required|date',
-            'category_id' => 'required|exists:budget_categories,id',
-            'notes'       => 'nullable|string',
+            'category_id' => ['required', \Illuminate\Validation\Rule::exists('budget_categories', 'id')->where('budget_id', $budget->id)],
+            'notes'       => 'nullable|string|max:2000',
+            // Uniquement http(s) : un lien « javascript: » s'exécuterait au clic.
+            'receipt_url' => ['nullable', 'url:http,https', 'max:2048'],
         ]);
 
         $expense = new Expense();
+        $expense->receipt_url = $data['receipt_url'] ?? null;
         $expense->budget_id   = $budget->id;
         $expense->description = $data['description'];
         $expense->amount      = $data['amount'];
@@ -53,12 +56,14 @@ class ExpenseController extends Controller
 
         $data = $request->validate([
             'description' => 'required|string|max:255',
-            'amount'      => 'required|numeric|min:0',
+            'amount'      => 'required|numeric|min:0|max:999999999',
             'date'        => 'required|date',
-            'category_id' => 'required|exists:budget_categories,id',
-            'notes'       => 'nullable|string',
+            'category_id' => ['required', \Illuminate\Validation\Rule::exists('budget_categories', 'id')->where('budget_id', $expense->budget_id)],
+            'notes'       => 'nullable|string|max:2000',
+            'receipt_url' => ['nullable', 'url:http,https', 'max:2048'],
         ]);
 
+        $expense->receipt_url = $data['receipt_url'] ?? null;
         $expense->description = $data['description'];
         $expense->amount      = $data['amount'];
         $expense->date        = $data['date'];
