@@ -52,7 +52,13 @@ jobs:
     environment: production
     steps:
       - name: Déployer sur le VPS
+        env:
+          HAS_KEY: ${{ secrets.DEPLOY_SSH_KEY != '' }}
         run: |
+          if [ "$HAS_KEY" != "true" ]; then
+            echo "::notice::Déploiement automatique non configuré (secret DEPLOY_SSH_KEY absent) : étape ignorée."
+            exit 0
+          fi
           install -m 700 -d ~/.ssh
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
