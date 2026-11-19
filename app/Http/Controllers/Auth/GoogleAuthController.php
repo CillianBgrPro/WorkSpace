@@ -83,6 +83,7 @@ class GoogleAuthController extends Controller
                     'avatar' => $googleUser->getAvatar(),
                     // Mot de passe aléatoire : l'utilisateur pourra en définir un via « Mot de passe oublié ».
                     'password' => Str::password(32),
+                    'has_password' => false,
                     'email_verified_at' => now(),
                 ]);
 

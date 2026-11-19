@@ -141,14 +141,16 @@ function SidebarContent({ collapsed, activeProject, navItems, currentUrl, user, 
                         {!collapsed && <span className="text-[11px] text-white/30">?</span>}
                     </button>
                 )}
-                <div className={`flex items-center gap-2.5 rounded-lg p-2 ${collapsed ? 'flex-col' : ''}`}>
-                    <Avatar name={user?.name ?? ''} size="md" className="ring-white/10" />
-                    {!collapsed && (
-                        <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-white">{user?.name}</p>
-                            <p className="truncate text-xs text-white/40">{user?.email}</p>
-                        </div>
-                    )}
+                <div className={`flex items-center gap-2.5 rounded-lg p-1 ${collapsed ? 'flex-col' : ''}`}>
+                    <Link href={route('profile.edit')} title="Mon compte" className={`flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1 transition hover:bg-white/5 ${collapsed ? 'justify-center' : ''}`}>
+                        <Avatar name={user?.name ?? ''} size="md" className="ring-white/10" />
+                        {!collapsed && (
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-white">{user?.name}</p>
+                                <p className="truncate text-xs text-white/40">{user?.email}</p>
+                            </div>
+                        )}
+                    </Link>
                     <Link
                         href={route('logout')}
                         method="post"

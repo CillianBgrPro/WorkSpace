@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PaletteController;
+use App\Http\Controllers\CalendarFeedController;
+use App\Http\Controllers\ProfileController;
 
 // page d'accueil
 Route::get('/', function () {
@@ -45,8 +47,21 @@ Route::get('/dashboard', function () {
     return redirect()->route('projects.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Flux iCal personnel (sans session, protégé par un jeton secret)
+Route::get('/calendar/feed/{token}.ics', CalendarFeedController::class)
+    ->where('token', '[A-Za-z0-9]{48}')
+    ->middleware('throttle:60,1')
+    ->name('calendar.feed');
+
 Route::middleware('auth')->group(function () {
     Route::get('/palette', PaletteController::class)->name('palette');
+
+    // Profil
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])->name('profile.preferences');
+    Route::post('/profile/calendar-token', [ProfileController::class, 'regenerateCalendarToken'])->name('profile.calendar-token');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // projets
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');

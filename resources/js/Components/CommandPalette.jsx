@@ -5,7 +5,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/20/solid';
 import {
     HomeIcon, CheckCircleIcon, UsersIcon, CalendarIcon, CurrencyEuroIcon, DocumentIcon,
     FolderIcon, PlusIcon, UserPlusIcon, ArrowDownTrayIcon, Squares2X2Icon, ListBulletIcon,
-    ArrowRightOnRectangleIcon, ArrowsRightLeftIcon,
+    ArrowRightOnRectangleIcon, ArrowsRightLeftIcon, UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { StatusBadge } from '@/Components/ui/Badge';
 import Kbd from '@/Components/ui/Kbd';
@@ -45,6 +45,7 @@ export default function CommandPalette({ open, onClose, activeProject }) {
             { id: 'nav-teams', group: 'Aller à', label: 'Équipes', icon: UsersIcon, hint: 'G E', run: () => go('/teams') },
             { id: 'nav-files', group: 'Aller à', label: 'Fichiers', icon: DocumentIcon, hint: 'G F', run: () => go('/project-files') },
             { id: 'nav-projects', group: 'Aller à', label: 'Tous mes projets', icon: FolderIcon, hint: 'G P', run: () => go('/projects') },
+            { id: 'nav-profile', group: 'Aller à', label: 'Mon compte (profil, mot de passe, thème)', icon: UserCircleIcon, run: () => go('/profile') },
         ];
         const actions = [
             { id: 'new-task', group: 'Actions', label: 'Nouvelle tâche', icon: PlusIcon, hint: 'N', run: () => go('/tasks/create') },

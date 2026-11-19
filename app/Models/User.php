@@ -16,10 +16,18 @@ class User extends Authenticatable
         'password',
     ];
 
+    /** Valeurs par défaut, alignées sur la base (utile avant tout rechargement du modèle). */
+    protected $attributes = [
+        'has_password'        => true,
+        'theme'               => 'system',
+        'email_notifications' => true,
+    ];
+
     protected $hidden = [
         'password',
         'remember_token',
         'google_id',
+        'calendar_token',
     ];
 
     protected function casts(): array
@@ -27,6 +35,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'has_password' => 'boolean',
+            'email_notifications' => 'boolean',
         ];
     }
 

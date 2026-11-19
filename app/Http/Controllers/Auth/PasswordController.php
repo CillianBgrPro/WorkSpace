@@ -15,8 +15,11 @@ class PasswordController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        // Un compte créé via Google n'a pas de mot de passe connu : il peut en définir un directement.
+        $hasPassword = (bool) $request->user()->has_password;
+
         $validated = $request->validate([
-            'current_password' => ['required', 'current_password'],
+            'current_password' => $hasPassword ? ['required', 'current_password'] : ['nullable'],
             'password' => ['required', Password::defaults(), 'confirmed'],
         ], [
             'current_password.required' => 'Le champ mot de passe actuel est obligatoire.',
@@ -25,10 +28,11 @@ class PasswordController extends Controller
             'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
         ]);
 
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-        ]);
+        $request->user()->forceFill([
+            'password'     => Hash::make($validated['password']),
+            'has_password' => true,
+        ])->save();
 
-        return back();
+        return back()->with('success', $hasPassword ? 'Mot de passe modifié.' : 'Mot de passe défini : vous pouvez aussi vous connecter avec votre e-mail.');
     }
 }

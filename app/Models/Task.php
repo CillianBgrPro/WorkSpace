@@ -61,6 +61,7 @@ class Task extends Model
         return $this->hasMany(TaskComment::class);
     }
 
+    /** Personnes assignées (plusieurs possibles) — table pivot task_user. */
     public function assignedUsers()
     {
         return $this->belongsToMany(User::class)->withTimestamps();
