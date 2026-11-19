@@ -17,11 +17,11 @@ class InvitationController extends Controller
         }
 
         if ($user = $request->user()) {
-            $invitation->acceptFor($user);
+            $joined = $invitation->acceptFor($user);
             session(['active_project_id' => $invitation->project_id]);
 
             return redirect()->route('projects.dashboard', $invitation->project_id)
-                ->with('success', "Bienvenue dans « {$invitation->project->name} » !");
+                ->with('success', $joined ? "Bienvenue dans « {$invitation->project->name} » !" : 'Vous faites déjà partie de ce projet.');
         }
 
         // Pas connecté : on garde l'invitation en session, acceptée automatiquement à la connexion.

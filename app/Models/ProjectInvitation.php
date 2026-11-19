@@ -51,12 +51,18 @@ class ProjectInvitation extends Model
         return $this->accepted_at === null && $this->expires_at->isFuture();
     }
 
-    /** Ajoute l'utilisateur au projet et clôt l'invitation. */
-    public function acceptFor(User $user): void
+    /**
+     * Ajoute l'utilisateur au projet et clôt l'invitation.
+     * Déjà membre : l'invitation reste valable pour la personne à qui elle était destinée.
+     */
+    public function acceptFor(User $user): bool
     {
-        if (!$this->project->isMember($user)) {
-            $this->project->members()->attach($user->id, ['role' => $this->role]);
+        if ($this->project->isMember($user)) {
+            return false;
         }
+        $this->project->members()->attach($user->id, ['role' => $this->role]);
         $this->forceFill(['accepted_at' => now()])->save();
+
+        return true;
     }
 }

@@ -369,3 +369,18 @@
         font-size: 16px !important;
     }
 }
+
+/* ── Mode sombre : le blanc des surfaces devient la couleur de carte ── */
+.dark { color-scheme: dark; }
+.dark body { background-color: rgb(var(--c-gray-50)); color: rgb(var(--c-gray-900)); }
+.dark .bg-white,
+.dark .hover\:bg-white:hover { background-color: rgb(var(--c-surface)); }
+.dark .bg-white\/95 { background-color: rgb(var(--c-surface) / 0.95); }
+.dark .bg-white\/90 { background-color: rgb(var(--c-surface) / 0.9); }
+.dark .bg-white\/80 { background-color: rgb(var(--c-surface) / 0.8); }
+.dark .bg-white\/60 { background-color: rgb(var(--c-surface) / 0.6); }
+.dark .ring-white { --tw-ring-color: rgb(var(--c-surface)); }
+.dark .shadow-sm, .dark .shadow, .dark .shadow-lg, .dark .shadow-xl { --tw-shadow-color: rgb(0 0 0 / 0.4); }
+.dark input[type="date"], .dark input[type="datetime-local"] { color-scheme: dark; }
+.dark .fc { --calendar-title: #f1f3f7; --calendar-text: #e1e5ec; --calendar-day-number: #c9cfdb; --calendar-header-bg: #1a1f2b; --calendar-header-text: #a9b1c2; --calendar-btn-bg: #12151d; --calendar-btn-text: #e1e5ec; --calendar-btn-border: #343b4c; --calendar-btn-hover-bg: #1a1f2b; --calendar-day-other-bg: #0f1218; }
+.dark .fc-event-task { background-color: rgb(245 158 11 / 0.14) !important; color: #fcd34d !important; }

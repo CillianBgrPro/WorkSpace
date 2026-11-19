@@ -14,23 +14,23 @@ export default function TeamForm({ team = null, users = [], onSubmit, submitLabe
     };
 
     return (
-        <form onSubmit={submit} className="space-y-4 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow">
+        <form onSubmit={submit} className="space-y-4 bg-white p-4 sm:p-6 rounded-xl shadow">
             <div>
-                <label className="block text-sm font-medium mb-1 dark:text-white">Nom de l'equipe</label>
+                <label className="block text-sm font-medium mb-1">Nom de l'equipe</label>
                 <input
                     value={data.name}
                     onChange={(e) => setData('name', e.target.value)}
-                    className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
+                    className="w-full rounded-lg border-gray-300"
                 />
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
             </div>
 
             <div>
-                <label className="block text-sm font-medium mb-1 dark:text-white">Description</label>
+                <label className="block text-sm font-medium mb-1">Description</label>
                 <textarea
                     value={data.description}
                     onChange={(e) => setData('description', e.target.value)}
-                    className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
+                    className="w-full rounded-lg border-gray-300"
                     rows={4}
                 />
                 {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
@@ -38,12 +38,12 @@ export default function TeamForm({ team = null, users = [], onSubmit, submitLabe
 
             {users.length > 0 && (
                 <div>
-                    <label className="block text-sm font-medium mb-1 dark:text-white">Ajouter un membre</label>
+                    <label className="block text-sm font-medium mb-1">Ajouter un membre</label>
                     <div className="grid md:grid-cols-2 gap-4">
                         <select
                             value={data.member_id}
                             onChange={(e) => setData('member_id', e.target.value)}
-                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-gray-white"
+                            className="w-full rounded-lg border-gray-300"
                         >
                             <option value="">Choisir un utilisateur</option>
                             {users.map((user) => (
@@ -53,7 +53,7 @@ export default function TeamForm({ team = null, users = [], onSubmit, submitLabe
                         <select
                             value={data.role}
                             onChange={(e) => setData('role', e.target.value)}
-                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white"
+                            className="w-full rounded-lg border-gray-300"
                         >
                             <option value="admin">Administrateur</option>
                             <option value="chef_projet">Chef de projet</option>

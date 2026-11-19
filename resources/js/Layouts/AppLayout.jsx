@@ -246,7 +246,7 @@ export default function AppLayout({ children, header }) {
             </a>
 
             {/* Sidebar desktop */}
-            <aside className={`hidden shrink-0 flex-col bg-[#0f0a2e] transition-[width] duration-200 md:flex ${collapsed ? 'w-[68px]' : 'w-64'}`}>
+            <aside className={`theme-fixed hidden shrink-0 flex-col bg-[#0f0a2e] transition-[width] duration-200 md:flex ${collapsed ? 'w-[68px]' : 'w-64'}`}>
                 <SidebarContent {...sidebarProps} collapsed={collapsed} onToggle={toggleCollapsed} />
             </aside>
 
@@ -257,7 +257,7 @@ export default function AppLayout({ children, header }) {
                     onClick={() => setMobileOpen(false)}
                 />
                 <aside
-                    className={`absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-[#0f0a2e] shadow-xl transition-transform duration-300 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                    className={`theme-fixed absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-[#0f0a2e] shadow-xl transition-transform duration-300 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
                 >
                     <SidebarContent {...sidebarProps} collapsed={false} onHelp={null} onClose={() => setMobileOpen(false)} onSearch={() => { setMobileOpen(false); setPaletteOpen(true); }} />
                 </aside>

@@ -92,27 +92,27 @@ export default function ShowBudget({ budget }) {
                 />
 
                 {/* Main Budget Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
+                <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                         <div className="space-y-1">
                             <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Description</span>
-                            <p className="text-gray-700 dark:text-gray-300">{budget.description || "Aucune description fournie."}</p>
+                            <p className="text-gray-700">{budget.description || "Aucune description fournie."}</p>
                         </div>
 
                         {/* Visual Alert Badges */}
                         <div>
                             {isOverBudget ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm font-semibold border border-red-200 dark:border-red-800">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-100 text-red-700 text-sm font-semibold border border-red-200">
                                     <ExclamationTriangleIcon className="w-4 h-4" />
                                     Dépassement de budget
                                 </span>
                             ) : isNearLimit ? (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm font-semibold border border-yellow-200 dark:border-yellow-800">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-100 text-yellow-700 text-sm font-semibold border border-yellow-200">
                                     <ExclamationTriangleIcon className="w-4 h-4" />
                                     Seuil critique atteint ({budget.alert_threshold}%)
                                 </span>
                             ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-semibold border border-green-200 dark:border-green-800">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-semibold border border-green-200">
                                     <CheckCircleIcon className="w-4 h-4" />
                                     Budget sous contrôle
                                 </span>
@@ -123,14 +123,14 @@ export default function ShowBudget({ budget }) {
                     {/* Main Progress Bar */}
                     <div className="mb-6">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                                Dépensé : <span className="font-bold text-gray-800 dark:text-white">{formatMoney(budget.total_expenses)}</span> sur {formatMoney(budget.amount)}
+                            <span className="text-sm font-medium text-gray-600">
+                                Dépensé : <span className="font-bold text-gray-800">{formatMoney(budget.total_expenses)}</span> sur {formatMoney(budget.amount)}
                             </span>
-                            <span className={`text-sm font-bold ${isOverBudget ? 'text-red-600 dark:text-red-400' : isNearLimit ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'}`}>
+                            <span className={`text-sm font-bold ${isOverBudget ? 'text-red-600' : isNearLimit ? 'text-yellow-600' : 'text-green-600'}`}>
                                 {budget.percentage_consumed.toFixed(1)}%
                             </span>
                         </div>
-                        <div className="w-full h-4 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden">
                             <div
                                 className={`h-full transition-all duration-500 rounded-full ${
                                     isOverBudget
@@ -146,30 +146,30 @@ export default function ShowBudget({ budget }) {
 
                     {/* Quick Stats Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Enveloppe globale</span>
-                            <span className="text-2xl font-bold text-gray-900 dark:text-white block mt-1">
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Enveloppe globale</span>
+                            <span className="text-2xl font-bold text-gray-900 block mt-1">
                                 {formatMoney(budget.amount)}
                             </span>
                         </div>
-                        <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Dépensé</span>
-                            <span className="text-2xl font-bold text-gray-900 dark:text-white block mt-1">
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Total Dépensé</span>
+                            <span className="text-2xl font-bold text-gray-900 block mt-1">
                                 {formatMoney(budget.total_expenses)}
                             </span>
                         </div>
                         <div className={`rounded-xl p-4 border ${
                             budget.remaining_budget >= 0 
-                                ? 'bg-green-50/50 dark:bg-green-950/20 border-green-100 dark:border-green-900/40' 
-                                : 'bg-red-50/50 dark:bg-red-950/20 border-red-100 dark:border-red-900/40'
+                                ? 'bg-green-50/50 border-green-100' 
+                                : 'bg-red-50/50 border-red-100'
                         }`}>
                             <span className={`text-xs font-semibold uppercase tracking-wider ${
-                                budget.remaining_budget >= 0 ? 'text-green-600' : 'text-red-600 dark:text-red-400'
+                                budget.remaining_budget >= 0 ? 'text-green-600' : 'text-red-600'
                             }`}>
                                 Solde Restant
                             </span>
                             <span className={`text-2xl font-bold block mt-1 ${
-                                budget.remaining_budget >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
+                                budget.remaining_budget >= 0 ? 'text-green-700' : 'text-red-700'
                             }`}>
                                 {formatMoney(budget.remaining_budget)}
                             </span>
@@ -181,16 +181,16 @@ export default function ShowBudget({ budget }) {
                 <div className="grid gap-6 lg:grid-cols-3">
                     
                     {/* Left Column: Categories */}
-                    <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80 h-fit space-y-6">
+                    <div className="lg:col-span-1 bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80 h-fit space-y-6">
                         <div>
-                            <h3 className="text-lg font-bold dark:text-white">Catégories</h3>
+                            <h3 className="text-lg font-bold">Catégories</h3>
                             <p className="text-xs text-gray-400">Visualisez les dépenses par poste budgétaire.</p>
                         </div>
 
                         {/* Categories List */}
                         <div className="space-y-3">
                             {budget.categories.length === 0 ? (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4 dark:bg-gray-900/20 rounded-xl">
+                                <p className="text-sm text-gray-500 text-center py-4 rounded-xl">
                                     Aucune catégorie.
                                 </p>
                             ) : (
@@ -207,17 +207,17 @@ export default function ShowBudget({ budget }) {
                                                         className="w-3.5 h-3.5 rounded-full shrink-0" 
                                                         style={{ backgroundColor: cat.color }} 
                                                     />
-                                                    <span className="font-semibold text-sm dark:text-white truncate max-w-[150px]">
+                                                    <span className="font-semibold text-sm truncate max-w-[150px]">
                                                         {cat.name}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
-                                                    <span className="text-sm font-bold dark:text-white">
+                                                    <span className="text-sm font-bold">
                                                         {formatMoney(cat.total_expenses)}
                                                     </span>
                                                     {canEdit && <button 
                                                         onClick={() => deleteCategory(cat.id, cat.name)}
-                                                        className="sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 rounded transition"
+                                                        className="sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 p-1 text-gray-400 hover:text-red-500 rounded transition"
                                                         title="Supprimer la catégorie et ses dépenses"
                                                     >
                                                         <TrashIcon className="w-4 h-4" />
@@ -225,7 +225,7 @@ export default function ShowBudget({ budget }) {
                                                 </div>
                                             </div>
                                             {/* Small Category Progress Indicator */}
-                                            <div className="mt-2 w-full h-1 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                            <div className="mt-2 w-full h-1 bg-gray-100 rounded-full overflow-hidden">
                                                 <div 
                                                     className="h-full rounded-full transition-all"
                                                     style={{ 
@@ -244,7 +244,7 @@ export default function ShowBudget({ budget }) {
                         </div>
 
                         {/* Add Category Form */}
-                        {canEdit && <form onSubmit={addCategory} className="pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                        {canEdit && <form onSubmit={addCategory} className="pt-4 border-t border-gray-100 space-y-3">
                             <span className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Créer une catégorie</span>
                             <div>
                                 <input
@@ -252,7 +252,7 @@ export default function ShowBudget({ budget }) {
                                     placeholder="Nom (ex: Matériel, Serveurs)"
                                     value={data.category_name}
                                     onChange={(e) => setData('category_name', e.target.value)}
-                                    className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    className="w-full rounded-lg border-gray-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     required
                                 />
                                 {errors.category_name && <p className="text-red-500 text-xs mt-1">{errors.category_name}</p>}
@@ -284,9 +284,9 @@ export default function ShowBudget({ budget }) {
                     <div className="lg:col-span-2 space-y-6">
                         
                         {/* Panel: Add Expense */}
-                        {canEdit && <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
+                        {canEdit && <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
                             <div>
-                                <h3 className="text-lg font-bold dark:text-white">Nouvelle dépense</h3>
+                                <h3 className="text-lg font-bold">Nouvelle dépense</h3>
                                 <p className="text-xs text-gray-400">Catégorie et date sont conservées pour enchaîner les saisies.</p>
                             </div>
 
@@ -297,7 +297,7 @@ export default function ShowBudget({ budget }) {
                                         <select
                                             value={expenseData.category_id}
                                             onChange={(e) => setExpenseData('category_id', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                             required
                                         >
                                             <option value="">Sélectionner une catégorie</option>
@@ -315,7 +315,7 @@ export default function ShowBudget({ budget }) {
                                             placeholder="Ex: Facture AWS Juin"
                                             value={expenseData.description}
                                             onChange={(e) => setExpenseData('description', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                             required
                                         />
                                         {errorsExpense.description && <p className="text-red-500 text-xs mt-1">{errorsExpense.description}</p>}
@@ -331,7 +331,7 @@ export default function ShowBudget({ budget }) {
                                             placeholder="0.00"
                                             value={expenseData.amount}
                                             onChange={(e) => setExpenseData('amount', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                             required
                                         />
                                         {errorsExpense.amount && <p className="text-red-500 text-xs mt-1">{errorsExpense.amount}</p>}
@@ -342,7 +342,7 @@ export default function ShowBudget({ budget }) {
                                             type="date"
                                             value={expenseData.date}
                                             onChange={(e) => setExpenseData('date', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                             required
                                         />
                                         {errorsExpense.date && <p className="text-red-500 text-xs mt-1">{errorsExpense.date}</p>}
@@ -357,7 +357,7 @@ export default function ShowBudget({ budget }) {
                                             placeholder="https://ex.com/recu.pdf"
                                             value={expenseData.receipt_url}
                                             onChange={(e) => setExpenseData('receipt_url', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                         />
                                         {errorsExpense.receipt_url && <p className="text-red-500 text-xs mt-1">{errorsExpense.receipt_url}</p>}
                                     </div>
@@ -368,7 +368,7 @@ export default function ShowBudget({ budget }) {
                                             placeholder="Commentaire ou précisions..."
                                             value={expenseData.notes}
                                             onChange={(e) => setExpenseData('notes', e.target.value)}
-                                            className="w-full rounded-lg border-gray-300 dark:bg-gray-700 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                            className="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                         />
                                         {errorsExpense.notes && <p className="text-red-500 text-xs mt-1">{errorsExpense.notes}</p>}
                                     </div>
@@ -386,22 +386,22 @@ export default function ShowBudget({ budget }) {
                         </div>}
 
                         {/* Panel: Transaction History */}
-                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
+                        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
                             <div>
-                                <h3 className="text-lg font-bold dark:text-white">Historique des transactions</h3>
+                                <h3 className="text-lg font-bold">Historique des transactions</h3>
                                 <p className="text-xs text-gray-400">Les plus récentes en premier.</p>
                             </div>
 
                             <div className="mt-4 space-y-3 max-h-[480px] overflow-y-auto pr-1">
                                 {budget.expenses.length === 0 ? (
-                                    <div className="text-center py-8 bg-gray-50 dark:bg-gray-900/20 rounded-xl">
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">Aucune dépense enregistrée sur ce budget.</p>
+                                    <div className="text-center py-8 bg-gray-50 rounded-xl">
+                                        <p className="text-sm text-gray-500">Aucune dépense enregistrée sur ce budget.</p>
                                     </div>
                                 ) : (
                                     budget.expenses.map((exp) => (
                                         <div 
                                             key={exp.id} 
-                                            className="flex flex-col p-4 rounded-xl border border-gray-100 hover:shadow-sm transition bg-white dark:bg-gray-800"
+                                            className="flex flex-col p-4 rounded-xl border border-gray-100 hover:shadow-sm transition bg-white"
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="space-y-1">
@@ -410,22 +410,22 @@ export default function ShowBudget({ budget }) {
                                                             className="w-2.5 h-2.5 rounded-full shrink-0" 
                                                             style={{ backgroundColor: exp.category_color }} 
                                                         />
-                                                        <h4 className="font-bold text-sm dark:text-white leading-tight">
+                                                        <h4 className="font-bold text-sm leading-tight">
                                                             {exp.description}
                                                         </h4>
-                                                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                                        <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">
                                                             {exp.category}
                                                         </span>
                                                     </div>
                                                     <p className="text-xs text-gray-400">{formatShortDate(exp.date)}</p>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className="font-extrabold text-sm dark:text-white text-right shrink-0">
+                                                    <span className="font-extrabold text-sm text-right shrink-0">
                                                         -{formatMoney(exp.amount)}
                                                     </span>
                                                     {canEdit && <button
                                                         onClick={() => deleteExpense(exp.id)}
-                                                        className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 dark:text-gray-500 dark:hover:text-red-400 transition"
+                                                        className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
                                                         title="Supprimer la transaction"
                                                     >
                                                         <TrashIcon className="w-4 h-4" />
@@ -435,9 +435,9 @@ export default function ShowBudget({ budget }) {
 
                                             {/* Details (Notes & Justificatifs) */}
                                             {(exp.notes || exp.receipt_url) && (
-                                                <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-700/60 flex flex-col gap-2">
+                                                <div className="mt-3 pt-2.5 border-t border-gray-100 flex flex-col gap-2">
                                                     {exp.notes && (
-                                                        <div className="flex items-start gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                                        <div className="flex items-start gap-1.5 text-xs text-gray-500">
                                                             <DocumentTextIcon className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                                                             <span>{exp.notes}</span>
                                                         </div>
@@ -449,7 +449,7 @@ export default function ShowBudget({ budget }) {
                                                                 href={exp.receipt_url} 
                                                                 target="_blank" 
                                                                 rel="noopener noreferrer"
-                                                                className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium hover:underline inline-flex items-center gap-1"
+                                                                className="text-indigo-600 hover:text-indigo-700 font-medium hover:underline inline-flex items-center gap-1"
                                                             >
                                                                 Justificatif / Reçu de transaction
                                                             </a>

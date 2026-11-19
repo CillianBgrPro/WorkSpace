@@ -5,7 +5,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/20/solid';
 import {
     HomeIcon, CheckCircleIcon, UsersIcon, CalendarIcon, CurrencyEuroIcon, DocumentIcon,
     FolderIcon, PlusIcon, UserPlusIcon, ArrowDownTrayIcon, Squares2X2Icon, ListBulletIcon,
-    ArrowRightOnRectangleIcon, ArrowsRightLeftIcon, UserCircleIcon,
+    ArrowRightOnRectangleIcon, ArrowsRightLeftIcon, UserCircleIcon, SunIcon, MoonIcon, ComputerDesktopIcon,
 } from '@heroicons/react/24/outline';
 import { StatusBadge } from '@/Components/ui/Badge';
 import Kbd from '@/Components/ui/Kbd';
@@ -56,6 +56,10 @@ export default function CommandPalette({ open, onClose, activeProject }) {
             p && { id: 'add-member', group: 'Actions', label: 'Inviter un membre au projet', icon: UserPlusIcon, run: () => go(`/projects/${p.id}?invite=1`) },
             { id: 'export-tasks', group: 'Actions', label: 'Exporter les tâches (CSV)', icon: ArrowDownTrayIcon, run: () => { onClose(); window.location.href = route('reports.tasks.csv'); } },
             { id: 'export-exp', group: 'Actions', label: 'Exporter les dépenses (CSV)', icon: ArrowDownTrayIcon, run: () => { onClose(); window.location.href = route('reports.expenses.csv'); } },
+            ...[['light', 'Thème clair'], ['dark', 'Thème sombre'], ['system', 'Thème du système']].map(([theme, label]) => ({
+                id: `theme-${theme}`, group: 'Préférences', label, icon: theme === 'dark' ? MoonIcon : theme === 'light' ? SunIcon : ComputerDesktopIcon,
+                run: () => { onClose(); router.patch(route('profile.preferences'), { theme }, { preserveScroll: true, preserveState: true }); },
+            })),
             { id: 'logout', group: 'Actions', label: 'Se déconnecter', icon: ArrowRightOnRectangleIcon, run: () => { onClose(); router.post(route('logout')); } },
         ];
         const projects = data.projects

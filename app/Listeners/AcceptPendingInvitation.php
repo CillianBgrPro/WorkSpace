@@ -16,8 +16,7 @@ class AcceptPendingInvitation
         }
 
         $invitation = ProjectInvitation::where('token', $token)->first();
-        if ($invitation && $invitation->isPending() && $invitation->project) {
-            $invitation->acceptFor($event->user);
+        if ($invitation && $invitation->isPending() && $invitation->project && $invitation->acceptFor($event->user)) {
             session([
                 'active_project_id' => $invitation->project_id,
                 'url.intended'      => route('projects.dashboard', $invitation->project_id),

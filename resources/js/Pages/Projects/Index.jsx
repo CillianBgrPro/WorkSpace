@@ -21,7 +21,7 @@ export default function ProjectsIndex({ projects, auth, templates = [] }) {
     const archivedProjects = projects.filter(p => p.status !== 'active');
 
     return (
-        <div className="min-h-screen overflow-x-hidden bg-[#080520]" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <div className="theme-fixed min-h-screen overflow-x-hidden bg-[#080520]" style={{ fontFamily: "'Inter', sans-serif" }}>
             <Head title="Mes Projets" />
 
             {/* Fond animé */}

@@ -43,7 +43,7 @@ export default function CreateProjectModal({ onClose, templates = [], projects =
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto bg-[#0f0a2e] border border-white/10 rounded-2xl shadow-2xl p-5 sm:p-6 z-10">
+            <div className="theme-fixed relative w-full max-w-md max-h-[90dvh] overflow-y-auto bg-[#0f0a2e] border border-white/10 rounded-2xl shadow-2xl p-5 sm:p-6 z-10">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-white">Nouveau projet</h2>
                     <button

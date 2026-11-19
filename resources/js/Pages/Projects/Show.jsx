@@ -134,10 +134,11 @@ export default function ProjectShow({ project, invitations = [] }) {
                             return (
                                 <li key={m.id} className="group flex flex-wrap items-center gap-3 px-2 py-3 sm:flex-nowrap">
                                     <Avatar name={m.name} size="lg" />
-                                    <div className="min-w-0 flex-1">
+                                    <div className="min-w-0 flex-1 basis-[calc(100%-3.25rem)] sm:basis-0">
                                         <p className="truncate text-sm font-medium text-gray-900">{m.name}{m.id === me.id && <span className="font-normal text-gray-400"> (vous)</span>}</p>
                                         <p className="truncate text-xs text-gray-500">{m.email}</p>
                                     </div>
+                                    <div className="ml-[3.25rem] flex items-center gap-2 sm:ml-0">
                                     {canEditRole(m) ? (
                                         <Select value={role} onChange={(e) => changeRole(m, e.target.value)} aria-label={`Rôle de ${m.name}`} className="!w-auto !py-1.5 text-xs" title={ROLES[role].description}>
                                             {ASSIGNABLE.filter((r) => isOwner || r !== 'admin').map((r) => <option key={r} value={r}>{ROLES[r].label}</option>)}
@@ -156,6 +157,7 @@ export default function ProjectShow({ project, invitations = [] }) {
                                             {m.id === me.id ? <ArrowLeftOnRectangleIcon className="h-4 w-4" /> : <XMarkIcon className="h-4 w-4" />}
                                         </button>
                                     )}
+                                    </div>
                                 </li>
                             );
                         })}
@@ -173,17 +175,19 @@ export default function ProjectShow({ project, invitations = [] }) {
                                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-gray-300 text-gray-400">
                                             <EnvelopeIcon className="h-5 w-5" />
                                         </span>
-                                        <div className="min-w-0 flex-1">
+                                        <div className="min-w-0 flex-1 basis-[calc(100%-3.25rem)] sm:basis-0">
                                             <p className="truncate text-sm font-medium text-gray-900">{inv.email}</p>
                                             <p className="truncate text-xs text-gray-500">
                                                 {expired ? <span className="text-rose-600">Expirée le {formatDate(inv.expires_at)}</span> : <>Envoyée {formatRelative(inv.created_at)}{inv.inviter && ` par ${inv.inviter.name}`}</>}
                                             </p>
                                         </div>
+                                        <div className="ml-[3.25rem] flex items-center gap-1 sm:ml-0">
                                         <Badge className={ROLES[inv.role]?.className}>{ROLES[inv.role]?.label}</Badge>
                                         <Button variant="ghost" size="sm" icon={ArrowPathIcon} onClick={() => resend(inv)}>Renvoyer</Button>
                                         <button type="button" onClick={() => cancel(inv)} className="rounded-md p-1.5 text-gray-400 hover:bg-rose-50 hover:text-rose-600" title="Annuler l'invitation" aria-label={`Annuler l'invitation de ${inv.email}`}>
                                             <XMarkIcon className="h-4 w-4" />
                                         </button>
+                                        </div>
                                     </li>
                                 );
                             })}

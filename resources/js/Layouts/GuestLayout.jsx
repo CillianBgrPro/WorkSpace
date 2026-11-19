@@ -4,7 +4,7 @@ export default function GuestLayout({ children }) {
     return (
         <div className="min-h-screen flex">
 
-            <div className="hidden lg:flex lg:w-1/2 bg-[#0f0a2e] flex-col justify-between p-12">
+            <div className="theme-fixed hidden lg:flex lg:w-1/2 bg-[#0f0a2e] flex-col justify-between p-12">
 
                 <div className="flex items-center gap-3">
                     <span className="text-white font-semibold text-lg">WorkSpace</span>

@@ -88,7 +88,7 @@ export default function Welcome({ auth }) {
     return (
         <>
             <Head title="Accueil" />
-            <div className="min-h-screen overflow-x-hidden bg-[#0d0d1a] text-white">
+            <div className="theme-fixed min-h-screen overflow-x-hidden bg-[#0d0d1a] text-white">
 
                 {/* Navbar */}
                 <nav className="flex items-center justify-between gap-3 px-4 sm:px-8 py-5 max-w-7xl mx-auto">

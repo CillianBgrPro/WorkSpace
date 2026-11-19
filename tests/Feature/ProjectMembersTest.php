@@ -127,4 +127,14 @@ class ProjectMembersTest extends TestCase
 
         $this->assertFalse($this->project->isMember($editor));
     }
+
+    public function test_existing_member_does_not_consume_someone_elses_invitation(): void
+    {
+        $invitation = ProjectInvitation::issue($this->project, $this->owner, 'quelquun@example.com', 'editor');
+
+        $this->actingAs($this->owner)->get(route('invitations.show', $invitation->token))
+            ->assertRedirect(route('projects.dashboard', $this->project));
+
+        $this->assertTrue($invitation->fresh()->isPending());
+    }
 }
