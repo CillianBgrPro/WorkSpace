@@ -30,11 +30,13 @@ class NotificationController extends Controller
         $notification = $request->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
 
-        $url = $notification->data['url'] ?? route('projects.index');
-        // Uniquement des redirections internes.
-        if (!str_starts_with($url, config('app.url')) && !str_starts_with($url, '/')) {
-            $url = route('projects.index');
-        }
+        // Uniquement des redirections internes : on ne garde que le chemin, jamais un autre domaine.
+        $parts = parse_url($notification->data['url'] ?? '') ?: [];
+        $sameHost = !isset($parts['host']) || strcasecmp($parts['host'], parse_url(config('app.url'), PHP_URL_HOST)) === 0;
+        $path = $parts['path'] ?? '';
+        $url = $sameHost && str_starts_with($path, '/') && !str_starts_with($path, '//')
+            ? $path . (isset($parts['query']) ? '?' . $parts['query'] : '') . (isset($parts['fragment']) ? '#' . $parts['fragment'] : '')
+            : route('projects.index', absolute: false);
 
         return redirect()->to($url);
     }

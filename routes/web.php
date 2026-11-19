@@ -54,6 +54,10 @@ Route::get('/dashboard', function () {
 Route::get('/invitations/{token}', [InvitationController::class, 'show'])
     ->where('token', '[A-Za-z0-9]{48}')
     ->name('invitations.show');
+Route::post('/invitations/{token}', [InvitationController::class, 'accept'])
+    ->where('token', '[A-Za-z0-9]{48}')
+    ->middleware(['auth', 'verified'])
+    ->name('invitations.accept');
 
 // Flux iCal personnel (sans session, protégé par un jeton secret)
 Route::get('/calendar/feed/{token}.ics', CalendarFeedController::class)
@@ -92,15 +96,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/projects/{project}/dashboard', [DashboardController::class, 'index'])->name('projects.dashboard');
     Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
-    Route::post('/projects/{project}/members', [ProjectController::class, 'addMember'])->name('projects.members.add');
+    Route::post('/projects/{project}/members', [ProjectController::class, 'addMember'])->middleware('throttle:invitations')->name('projects.members.add');
     Route::delete('/projects/{project}/members/{user}', [ProjectController::class, 'removeMember'])->name('projects.members.remove');
     Route::patch('/projects/{project}/members/{user}', [ProjectController::class, 'updateMemberRole'])->name('projects.members.role');
-    Route::post('/projects/{project}/invitations/{invitation}/resend', [ProjectController::class, 'resendInvitation'])->name('projects.invitations.resend');
+    Route::post('/projects/{project}/invitations/{invitation}/resend', [ProjectController::class, 'resendInvitation'])->middleware('throttle:invitations')->name('projects.invitations.resend');
     Route::delete('/projects/{project}/invitations/{invitation}', [ProjectController::class, 'cancelInvitation'])->name('projects.invitations.cancel');
 
     // fichiers de projet
     Route::get('/project-files', [ProjectFileController::class, 'index'])->name('projects.files.index');
-    Route::post('/project-files', [ProjectFileController::class, 'store'])->name('projects.files.store');
+    Route::post('/project-files', [ProjectFileController::class, 'store'])->middleware('throttle:uploads')->name('projects.files.store');
     Route::get('/project-files/{file}/download', [ProjectFileController::class, 'download'])->name('projects.files.download');
     Route::get('/project-files/{file}/preview', [ProjectFileController::class, 'preview'])->name('projects.files.preview');
     Route::delete('/project-files/{file}', [ProjectFileController::class, 'destroy'])->name('projects.files.destroy');
@@ -123,9 +127,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
     // commentaires et pièces jointes des taches
-    Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
+    Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])->middleware('throttle:comments')->name('tasks.comments.store');
     Route::delete('comments/{comment}', [TaskCommentController::class, 'destroy'])->name('comments.destroy');
-    Route::post('tasks/{task}/attachments', [TaskAttachmentController::class, 'store'])->middleware('project.editor')->name('tasks.attachments.store');
+    Route::post('tasks/{task}/attachments', [TaskAttachmentController::class, 'store'])->middleware(['project.editor', 'throttle:uploads'])->name('tasks.attachments.store');
     Route::get('attachments/{attachment}', [TaskAttachmentController::class, 'show'])->name('attachments.show');
     Route::delete('attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->middleware('project.editor')->name('attachments.destroy');
 

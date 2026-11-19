@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="theme-color" content="#0f0a2e">
         {{-- Thème « système » : appliqué avant l'affichage pour éviter un flash clair. --}}
-        <script>
+        <script nonce="{{ Vite::cspNonce() }}">
             (function () {
                 var t = document.documentElement.dataset.theme;
                 if (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
@@ -27,7 +27,7 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
-        @routes
+        @routes(null, Vite::cspNonce())
         @viteReactRefresh
         @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
         @inertiaHead

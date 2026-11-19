@@ -46,7 +46,7 @@ class ReportController extends Controller
             // BOM UTF-8 pour Excel
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            fputcsv($file, ['ID', 'Titre', 'Statut', 'Priorité', 'Assigné à', 'Créé par', 'Date d\'échéance', 'Date de création']);
+            fputcsv($file, self::safeRow(['ID', 'Titre', 'Statut', 'Priorité', 'Assigné à', 'Créé par', 'Date d\'échéance', 'Date de création']));
 
             $statusMap = [
                 'todo'        => 'À faire',
@@ -56,7 +56,7 @@ class ReportController extends Controller
             ];
 
             foreach ($tasks as $task) {
-                fputcsv($file, [
+                fputcsv($file, self::safeRow([
                     $task->id,
                     $task->title,
                     $statusMap[$task->status] ?? $task->status,
@@ -65,7 +65,7 @@ class ReportController extends Controller
                     $task->user ? $task->user->name : '-',
                     $task->due_date ? $task->due_date->format('Y-m-d') : '-',
                     $task->created_at->format('Y-m-d H:i'),
-                ]);
+                ]));
             }
             fclose($file);
         };
@@ -99,21 +99,33 @@ class ReportController extends Controller
             $file = fopen('php://output', 'w');
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            fputcsv($file, ['ID', 'Description', 'Montant (€)', 'Catégorie', 'Date', 'Notes']);
+            fputcsv($file, self::safeRow(['ID', 'Description', 'Montant (€)', 'Catégorie', 'Date', 'Notes']));
 
             foreach ($expenses as $exp) {
-                fputcsv($file, [
+                fputcsv($file, self::safeRow([
                     $exp->id,
                     $exp->description,
                     number_format($exp->amount, 2, ',', ' '),
                     $exp->category ? $exp->category->name : 'Sans catégorie',
                     $exp->date->format('Y-m-d'),
                     $exp->notes ?? '',
-                ]);
+                ]));
             }
             fclose($file);
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /** Empêche l'injection de formules quand le CSV est ouvert dans un tableur. */
+    private static function safeRow(array $row): array
+    {
+        return array_map(function ($value) {
+            if (is_string($value) && $value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+                return "'" . $value;
+            }
+
+            return $value;
+        }, $row);
     }
 }

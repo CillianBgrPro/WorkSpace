@@ -72,9 +72,12 @@ class ProjectMembersTest extends TestCase
         $bob = User::factory()->create();
         $invitation = ProjectInvitation::issue($this->project, $this->owner, $bob->email, 'viewer');
 
-        $this->actingAs($bob)->get(route('invitations.show', $invitation->token))
-            ->assertRedirect(route('projects.dashboard', $this->project));
+        // Le lien seul n'ajoute personne : il faut confirmer.
+        $this->actingAs($bob)->get(route('invitations.show', $invitation->token))->assertOk();
+        $this->assertFalse($this->project->isMember($bob));
 
+        $this->actingAs($bob)->post(route('invitations.accept', $invitation->token))
+            ->assertRedirect(route('projects.dashboard', $this->project));
         $this->assertSame('viewer', $this->project->getMemberRole($bob));
     }
 

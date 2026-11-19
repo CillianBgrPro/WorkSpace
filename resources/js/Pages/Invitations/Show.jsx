@@ -1,10 +1,33 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { EnvelopeOpenIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import GuestLayout from '@/Layouts/GuestLayout';
 import GoogleButton, { OrSeparator } from '@/Components/GoogleButton';
 import Button from '@/Components/ui/Button';
 
-export default function InvitationShow({ state, project, inviter, email, hasAccount }) {
+export default function InvitationShow({ state, token, project, inviter, email, hasAccount, me }) {
+    if (state === 'confirm') {
+        return (
+            <GuestLayout>
+                <Head title={`Rejoindre ${project.name}`} />
+                <span className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold text-white" style={{ backgroundColor: project.color ?? '#6366f1' }}>
+                    {project.name.charAt(0).toUpperCase()}
+                </span>
+                <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Rejoindre « {project.name} » ?</h1>
+                <p className="mb-2 text-gray-500">
+                    {inviter ? <><strong className="text-gray-700">{inviter}</strong> vous invite</> : 'Vous êtes invité'} à collaborer sur ce projet.
+                </p>
+                <p className="mb-8 text-sm text-gray-500">
+                    Vous êtes connecté en tant que <strong className="text-gray-700">{me.name}</strong> ({me.email})
+                    {email.toLowerCase() !== me.email.toLowerCase() && <> — l'invitation était adressée à <strong className="text-gray-700">{email}</strong></>}.
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button size="lg" className="flex-1" onClick={() => router.post(route('invitations.accept', token))}>Rejoindre le projet</Button>
+                    <Button size="lg" variant="secondary" href={route('projects.index')}>Plus tard</Button>
+                </div>
+            </GuestLayout>
+        );
+    }
+
     if (state !== 'pending') {
         return (
             <GuestLayout>
