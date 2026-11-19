@@ -159,7 +159,19 @@ function Body({ file, previewUrl, downloadUrl }) {
 /**
  * Visionneuse plein écran. ← / → pour passer d'un fichier à l'autre, Échap pour fermer.
  */
-export default function FilePreview({ files, index, onIndexChange, onClose, formatSize }) {
+const defaultUrls = (file) => ({
+    preview: route('projects.files.preview', file.id),
+    download: route('projects.files.download', file.id),
+});
+
+export function formatBytes(bytes) {
+    if (!bytes) return '0 o';
+    const units = ['o', 'Ko', 'Mo', 'Go'];
+    const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+    return `${parseFloat((bytes / 1024 ** i).toFixed(1)).toLocaleString('fr-FR')} ${units[i]}`;
+}
+
+export default function FilePreview({ files, index, onIndexChange, onClose, formatSize = formatBytes, urls = defaultUrls }) {
     const file = index != null ? files[index] : null;
     const total = files.length;
 
@@ -176,8 +188,7 @@ export default function FilePreview({ files, index, onIndexChange, onClose, form
 
     if (!file) return null;
 
-    const previewUrl = route('projects.files.preview', file.id);
-    const downloadUrl = route('projects.files.download', file.id);
+    const { preview: previewUrl, download: downloadUrl } = urls(file);
     const canOpen = previewKind(file.name) !== null;
 
     const NavButton = ({ dir }) => {

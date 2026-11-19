@@ -52,7 +52,8 @@ class ProjectFileController extends Controller
         ]);
 
         $uploadedFile = $request->file('file');
-        $path = $uploadedFile->store('project_files/' . $project->id, 'public');
+        // Stockage privé : les fichiers ne sont servis qu'à travers l'application, après contrôle d'accès.
+        $path = $uploadedFile->store('project_files/' . $project->id, 'local');
 
         $file = ProjectFile::create([
             'project_id' => $project->id,
@@ -80,11 +81,12 @@ class ProjectFileController extends Controller
             abort(403);
         }
 
-        if (!Storage::disk('public')->exists($file->file_path)) {
+        $disk = Storage::disk($file->storageDisk());
+        if (!$disk->exists($file->file_path)) {
             abort(404, 'Fichier introuvable sur le serveur.');
         }
 
-        return Storage::disk('public')->download($file->file_path, $file->name);
+        return $disk->download($file->file_path, $file->name);
     }
 
     /**
@@ -99,20 +101,25 @@ class ProjectFileController extends Controller
             abort(403);
         }
 
-        $disk = Storage::disk('public');
+        $disk = Storage::disk($file->storageDisk());
         if (!$disk->exists($file->file_path)) {
             abort(404, 'Fichier introuvable sur le serveur.');
         }
 
-        $type = self::previewContentType($file->name);
+        return self::inlineResponse($disk->path($file->file_path), $file->name);
+    }
+
+    /** En-têtes d'aperçu sûrs, partagés avec les pièces jointes de tâches. */
+    public static function inlineResponse(string $absolutePath, string $name)
+    {
+        $type = self::previewContentType($name);
         if (!$type) {
             abort(415, 'Aperçu indisponible pour ce format.');
         }
 
-        $safeName = str_replace(['/', '\\'], '-', $file->name);
+        $safeName = str_replace(['/', '\\'], '-', $name);
         $headers = [
             'Content-Type'           => $type,
-            // Gère les noms accentués (filename*=UTF-8'') avec un repli ASCII.
             'Content-Disposition'    => HeaderUtils::makeDisposition('inline', $safeName, Str::ascii(str_replace('%', '-', $safeName)) ?: 'fichier'),
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control'          => 'private, max-age=600',
@@ -121,7 +128,7 @@ class ProjectFileController extends Controller
             $headers['Content-Security-Policy'] = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
         }
 
-        return response()->file($disk->path($file->file_path), $headers);
+        return response()->file($absolutePath, $headers);
     }
 
     /** Type MIME à utiliser pour l'aperçu, ou null si le format n'est pas prévisualisable. */
@@ -154,9 +161,7 @@ class ProjectFileController extends Controller
             abort(403);
         }
 
-        if (Storage::disk('public')->exists($file->file_path)) {
-            Storage::disk('public')->delete($file->file_path);
-        }
+        Storage::disk($file->storageDisk())->delete($file->file_path);
 
         $fileName = $file->name;
         $file->delete();

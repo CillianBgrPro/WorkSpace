@@ -27,4 +27,10 @@ class ProjectFile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /** Disque où se trouve le fichier : privé désormais, public pour les fichiers d'avant la migration. */
+    public function storageDisk(): string
+    {
+        return \Illuminate\Support\Facades\Storage::disk('local')->exists($this->file_path) ? 'local' : 'public';
+    }
 }

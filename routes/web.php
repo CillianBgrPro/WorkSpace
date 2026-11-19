@@ -107,6 +107,7 @@ Route::middleware('auth')->group(function () {
     Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
     Route::delete('comments/{comment}', [TaskCommentController::class, 'destroy'])->name('comments.destroy');
     Route::post('tasks/{task}/attachments', [TaskAttachmentController::class, 'store'])->middleware('project.editor')->name('tasks.attachments.store');
+    Route::get('attachments/{attachment}', [TaskAttachmentController::class, 'show'])->name('attachments.show');
     Route::delete('attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->middleware('project.editor')->name('attachments.destroy');
 
     // Modules en écriture réservée aux éditeurs (les lecteurs consultent seulement)

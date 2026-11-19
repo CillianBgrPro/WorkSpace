@@ -5,6 +5,7 @@ import { Card, CardHeader } from '@/Components/ui/Card';
 import { Spinner } from '@/Components/ui/Button';
 import { confirmDelete } from '@/Components/ui/ConfirmDialog';
 import { toast } from '@/Components/ui/Toaster';
+import FilePreview from '@/Components/Files/FilePreview';
 
 const MAX = 10 * 1024 * 1024;
 const ACCEPT = 'image/*,application/pdf,.pdf';
@@ -13,6 +14,9 @@ export default function TaskAttachments({ task, canEdit = true }) {
     const attachments = task.attachments ?? [];
     const [uploading, setUploading] = useState(false);
     const [dragOver, setDragOver] = useState(false);
+    const [previewIndex, setPreviewIndex] = useState(null);
+    // Même visionneuse que la page Fichiers.
+    const previewFiles = attachments.map((a) => ({ ...a, name: a.original_name }));
     const inputRef = useRef(null);
 
     // Envoi immédiat dès qu'un fichier est choisi ou déposé : pas de bouton « Uploader » à chercher.
@@ -43,7 +47,7 @@ export default function TaskAttachments({ task, canEdit = true }) {
                 <ul className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {attachments.map((a) => (
                         <li key={a.id} className="group relative overflow-hidden rounded-lg border border-gray-200">
-                            <a href={a.url} target="_blank" rel="noopener noreferrer" className="block">
+                            <button type="button" onClick={() => setPreviewIndex(attachments.indexOf(a))} className="block w-full text-left" title={`Aperçu de ${a.original_name}`}>
                                 {a.is_image ? (
                                     <img src={a.url} alt={a.original_name} className="h-28 w-full object-cover" loading="lazy" />
                                 ) : (
@@ -53,7 +57,7 @@ export default function TaskAttachments({ task, canEdit = true }) {
                                     </div>
                                 )}
                                 <p className="truncate border-t border-gray-100 px-2 py-1.5 text-xs text-gray-600" title={a.original_name}>{a.original_name}</p>
-                            </a>
+                            </button>
                             {canEdit && (
                                 <button
                                     type="button"
@@ -87,6 +91,13 @@ export default function TaskAttachments({ task, canEdit = true }) {
                 </label>
             )}
             {!canEdit && attachments.length === 0 && <p className="text-sm text-gray-400">Aucune pièce jointe.</p>}
+            <FilePreview
+                files={previewFiles}
+                index={previewIndex}
+                onIndexChange={setPreviewIndex}
+                onClose={() => setPreviewIndex(null)}
+                urls={(f) => ({ preview: f.url, download: `${f.url}?download=1` })}
+            />
         </Card>
     );
 }

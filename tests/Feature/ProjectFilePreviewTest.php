@@ -20,6 +20,7 @@ class ProjectFilePreviewTest extends TestCase
     {
         parent::setUp();
         Storage::fake('public');
+        Storage::fake('local');
 
         $this->user = User::factory()->create();
         $this->project = Project::create(['name' => 'P', 'color' => '#000', 'status' => 'active', 'owner_id' => $this->user->id]);
@@ -101,5 +102,35 @@ class ProjectFilePreviewTest extends TestCase
         $file = $this->makeFile('photo.png');
 
         $this->get(route('projects.files.preview', $file))->assertRedirect(route('login'));
+    }
+
+    public function test_uploaded_files_are_stored_privately(): void
+    {
+        $this->asMember()->post(route('projects.files.store'), [
+            'file' => \Illuminate\Http\UploadedFile::fake()->create('devis.pdf', 20, 'application/pdf'),
+        ])->assertSessionHasNoErrors();
+
+        $file = ProjectFile::firstOrFail();
+        Storage::disk('local')->assertExists($file->file_path);
+        Storage::disk('public')->assertMissing($file->file_path);
+        $this->asMember()->get(route('projects.files.preview', $file))->assertOk();
+    }
+
+    public function test_task_attachment_is_only_served_to_members(): void
+    {
+        $task = \App\Models\Task::create(['user_id' => $this->user->id, 'project_id' => $this->project->id, 'title' => 'T', 'status' => 'todo', 'priority' => 'medium']);
+        $editor = User::factory()->create();
+        $this->project->members()->attach($editor->id, ['role' => 'editor']);
+
+        // Un éditeur (pas le créateur de la tâche) peut joindre un fichier.
+        $this->actingAs($editor)->withSession(['active_project_id' => $this->project->id])
+            ->post(route('tasks.attachments.store', $task), ['file' => \Illuminate\Http\UploadedFile::fake()->image('capture.png')])
+            ->assertSessionHasNoErrors();
+
+        $attachment = \App\Models\TaskAttachment::firstOrFail();
+        Storage::disk('local')->assertExists($attachment->path);
+
+        $this->actingAs($editor)->get($attachment->url)->assertOk();
+        $this->actingAs(User::factory()->create())->get($attachment->url)->assertForbidden();
     }
 }

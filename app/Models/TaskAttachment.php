@@ -22,13 +22,19 @@ class TaskAttachment extends Model
     protected static function booted(): void
     {
         static::deleting(function (TaskAttachment $attachment) {
-            Storage::disk('public')->delete($attachment->path);
+            Storage::disk($attachment->storageDisk())->delete($attachment->path);
         });
     }
 
+    /** URL protégée (membres du projet uniquement), plus de lien public direct. */
     public function getUrlAttribute(): string
     {
-        return Storage::disk('public')->url($this->path);
+        return route('attachments.show', $this);
+    }
+
+    public function storageDisk(): string
+    {
+        return Storage::disk('local')->exists($this->path) ? 'local' : 'public';
     }
 
     public function getIsImageAttribute(): bool
