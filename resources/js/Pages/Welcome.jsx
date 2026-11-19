@@ -264,8 +264,8 @@ export default function Welcome({ auth }) {
                         © 2026. Tous droits réservés.
                     </div>
                     <div className="flex gap-6">
-                        <a href="#" className="hover:text-white/60 transition">Confidentialité</a>
-                        <a href="#" className="hover:text-white/60 transition">CGU</a>
+                        <Link href={route('legal.privacy')} className="hover:text-white/60 transition">Confidentialité</Link>
+                        <Link href={route('legal.terms')} className="hover:text-white/60 transition">CGU</Link>
                         <a href="#" className="hover:text-white/60 transition">Contact</a>
                     </div>
                 </footer>

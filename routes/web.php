@@ -26,6 +26,19 @@ Route::get('/', function () {
     ]);
 });
 
+// pages légales (requises pour la connexion Google)
+Route::get('/confidentialite', fn () => Inertia::render('Legal', [
+    'page' => 'privacy',
+    'contact' => config('mail.from.address'),
+    'updatedAt' => '19 novembre 2026',
+]))->name('legal.privacy');
+
+Route::get('/conditions', fn () => Inertia::render('Legal', [
+    'page' => 'terms',
+    'contact' => config('mail.from.address'),
+    'updatedAt' => '19 novembre 2026',
+]))->name('legal.terms');
+
 // /dashboard redirige vers la sélection de projet
 Route::get('/dashboard', function () {
     return redirect()->route('projects.index');
