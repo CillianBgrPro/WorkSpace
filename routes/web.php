@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/project-files', [ProjectFileController::class, 'index'])->name('projects.files.index');
     Route::post('/project-files', [ProjectFileController::class, 'store'])->name('projects.files.store');
     Route::get('/project-files/{file}/download', [ProjectFileController::class, 'download'])->name('projects.files.download');
+    Route::get('/project-files/{file}/preview', [ProjectFileController::class, 'preview'])->name('projects.files.preview');
     Route::delete('/project-files/{file}', [ProjectFileController::class, 'destroy'])->name('projects.files.destroy');
 
     // exports et rapports

@@ -1,9 +1,12 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import {
     DocumentIcon, ArrowUpTrayIcon, ArrowDownTrayIcon, TrashIcon, DocumentTextIcon,
-    PhotoIcon, TableCellsIcon, ArchiveBoxIcon, CodeBracketIcon, MagnifyingGlassIcon,
+    PhotoIcon, TableCellsIcon, ArchiveBoxIcon, CodeBracketIcon, MagnifyingGlassIcon, EyeIcon,
+    FilmIcon, MusicalNoteIcon,
 } from '@heroicons/react/24/outline';
+import FilePreview from '@/Components/Files/FilePreview';
+import { previewKind } from '@/lib/filePreview';
 import AppLayout from '@/Layouts/AppLayout';
 import PageHeader from '@/Components/ui/PageHeader';
 import EmptyState from '@/Components/ui/EmptyState';
@@ -21,6 +24,8 @@ function fileIcon(mimeType, fileName) {
     if (['xls', 'xlsx', 'csv'].includes(ext)) return [TableCellsIcon, 'bg-emerald-50 text-emerald-500'];
     if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return [ArchiveBoxIcon, 'bg-amber-50 text-amber-500'];
     if (['js', 'ts', 'jsx', 'json', 'php', 'html', 'css'].includes(ext)) return [CodeBracketIcon, 'bg-pink-50 text-pink-500'];
+    if (['mp4', 'webm', 'mov', 'ogv'].includes(ext)) return [FilmIcon, 'bg-sky-50 text-sky-500'];
+    if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) return [MusicalNoteIcon, 'bg-orange-50 text-orange-500'];
     return [DocumentIcon, 'bg-gray-100 text-gray-400'];
 }
 
@@ -35,7 +40,21 @@ export default function ProjectFiles({ files = [], canEdit = false }) {
     const [dragging, setDragging] = useState(false);
     const [uploading, setUploading] = useState(null);
     const [query, setQuery] = useState('');
+    const [previewId, setPreviewId] = useState(null);
     const inputRef = useRef(null);
+
+    // Lien direct vers un aperçu : /project-files?apercu=12
+    useEffect(() => {
+        const id = Number(new URLSearchParams(window.location.search).get('apercu'));
+        if (id && files.some((f) => f.id === id)) setPreviewId(id);
+    }, []);
+
+    const openPreview = (id) => {
+        setPreviewId(id);
+        const url = new URL(window.location.href);
+        if (id) url.searchParams.set('apercu', id); else url.searchParams.delete('apercu');
+        window.history.replaceState(window.history.state, '', url);
+    };
 
     // Envoi dès la sélection : un geste au lieu de deux.
     const upload = (file) => {
@@ -67,7 +86,7 @@ export default function ProjectFiles({ files = [], canEdit = false }) {
 
             <PageHeader
                 title="Fichiers"
-                description={files.length ? `${files.length} document${files.length > 1 ? 's' : ''} partagé${files.length > 1 ? 's' : ''} avec l'équipe` : 'Centralisez les documents du projet.'}
+                description={files.length ? `${files.length} document${files.length > 1 ? 's' : ''} partagé${files.length > 1 ? 's' : ''} avec l'équipe · cliquez sur un fichier pour l'aperçu` : 'Centralisez les documents du projet.'}
             />
 
             <div className="space-y-5">
@@ -114,18 +133,40 @@ export default function ProjectFiles({ files = [], canEdit = false }) {
                                 const [Icon, tone] = fileIcon(file.mime_type, file.name);
                                 return (
                                     <li key={file.id} className="group flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
-                                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tone}`}>
-                                            <Icon className="h-5 w-5" />
-                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => openPreview(file.id)}
+                                            className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg ${tone}`}
+                                            tabIndex={-1}
+                                            aria-hidden="true"
+                                        >
+                                            {previewKind(file.name) === 'image'
+                                                ? <img src={route('projects.files.preview', file.id)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                                                : <Icon className="h-5 w-5" />}
+                                        </button>
                                         <div className="min-w-0 flex-1">
-                                            <a href={route('projects.files.download', file.id)} className="block truncate text-sm font-medium text-gray-900 hover:text-indigo-600" title={file.name}>
+                                            <button
+                                                type="button"
+                                                onClick={() => openPreview(file.id)}
+                                                className="block max-w-full truncate text-left text-sm font-medium text-gray-900 hover:text-indigo-600"
+                                                title={`Aperçu de ${file.name}`}
+                                            >
                                                 {file.name}
-                                            </a>
+                                            </button>
                                             <p className="truncate text-xs text-gray-500">
                                                 {formatSize(file.size)} · {file.user?.name ?? 'Inconnu'}
                                                 {file.created_at && <> · <span title={formatDateTime(file.created_at)}>{formatRelative(file.created_at)}</span></>}
                                             </p>
                                         </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => openPreview(file.id)}
+                                            className="hidden rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-indigo-600 sm:inline-flex"
+                                            title="Aperçu"
+                                            aria-label={`Aperçu de ${file.name}`}
+                                        >
+                                            <EyeIcon className="h-5 w-5" />
+                                        </button>
                                         <a
                                             href={route('projects.files.download', file.id)}
                                             className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-indigo-600"
@@ -153,6 +194,14 @@ export default function ProjectFiles({ files = [], canEdit = false }) {
                     </div>
                 )}
             </div>
+
+            <FilePreview
+                files={filtered}
+                index={previewId ? (filtered.findIndex((f) => f.id === previewId) === -1 ? null : filtered.findIndex((f) => f.id === previewId)) : null}
+                onIndexChange={(i) => openPreview(filtered[i].id)}
+                onClose={() => openPreview(null)}
+                formatSize={formatSize}
+            />
         </AppLayout>
     );
 }
