@@ -18,6 +18,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\CalendarFeedController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 
 // page d'accueil
@@ -61,6 +62,11 @@ Route::get('/calendar/feed/{token}.ics', CalendarFeedController::class)
 
 Route::middleware('auth')->group(function () {
     Route::get('/palette', PaletteController::class)->name('palette');
+
+    // Notifications (cloche)
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::get('/notifications/{id}', [NotificationController::class, 'open'])->name('notifications.open');
 
     // Profil
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -8,6 +8,7 @@ import PageHeader from '@/Components/ui/PageHeader';
 import Button from '@/Components/ui/Button';
 import { Card, CardHeader } from '@/Components/ui/Card';
 import Avatar from '@/Components/ui/Avatar';
+import { assigneesOf } from '@/lib/taskMeta';
 import { StatusBadge, PriorityBadge, DueBadge } from '@/Components/ui/Badge';
 import { confirmDelete } from '@/Components/ui/ConfirmDialog';
 import { STATUSES, normalizeStatus, isDone } from '@/lib/taskMeta';
@@ -22,7 +23,7 @@ function Property({ label, children }) {
     );
 }
 
-export default function ShowTask({ task, canEdit = true }) {
+export default function ShowTask({ task, canEdit = true, members = [] }) {
     const status = normalizeStatus(task.status);
     const done = isDone(task.status);
 
@@ -98,7 +99,7 @@ export default function ShowTask({ task, canEdit = true }) {
                     </Card>
 
                     <TaskAttachments task={task} canEdit={canEdit} />
-                    <TaskComments task={task} />
+                    <TaskComments task={task} members={members} />
                 </div>
 
                 {/* Panneau de propriétés */}
@@ -127,9 +128,13 @@ export default function ShowTask({ task, canEdit = true }) {
 
                     <Card>
                         <dl className="-my-2.5 divide-y divide-gray-100">
-                            <Property label="Assignée à">
-                                {task.assignee ? (
-                                    <span className="inline-flex items-center gap-2"><Avatar name={task.assignee.name} size="sm" />{task.assignee.name}</span>
+                            <Property label={assigneesOf(task).length > 1 ? 'Assignés' : 'Assignée à'}>
+                                {assigneesOf(task).length ? (
+                                    <span className="flex flex-col items-end gap-1">
+                                        {assigneesOf(task).map((u) => (
+                                            <span key={u.id} className="inline-flex items-center gap-2"><Avatar name={u.name} size="sm" />{u.name}</span>
+                                        ))}
+                                    </span>
                                 ) : <span className="text-gray-400">Personne</span>}
                             </Property>
                             <Property label="Priorité"><PriorityBadge priority={task.priority} /></Property>

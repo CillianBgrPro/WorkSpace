@@ -10,6 +10,7 @@ import {
     HomeIcon as HomeSolid, CheckCircleIcon as CheckSolid, CalendarIcon as CalendarSolid, CurrencyEuroIcon as EuroSolid,
 } from '@heroicons/react/24/solid';
 import CommandPalette, { openPaletteEvent } from '@/Components/CommandPalette';
+import NotificationBell from '@/Components/NotificationBell';
 import ShortcutsHelp from '@/Components/ShortcutsHelp';
 import Avatar from '@/Components/ui/Avatar';
 import Kbd, { modKey } from '@/Components/ui/Kbd';
@@ -287,6 +288,7 @@ export default function AppLayout({ children, header }) {
                     </nav>
 
                     <div className="ml-auto flex items-center gap-1.5">
+                        <NotificationBell />
                         <button
                             onClick={() => setPaletteOpen(true)}
                             className="hidden items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-gray-500 ring-1 ring-inset ring-gray-200 transition hover:text-gray-800 hover:ring-gray-300 lg:flex"

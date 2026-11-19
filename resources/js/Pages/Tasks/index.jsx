@@ -7,9 +7,9 @@ import TaskFilters from '@/Components/Tasks/TaskFilters';
 import PageHeader from '@/Components/ui/PageHeader';
 import Button from '@/Components/ui/Button';
 import EmptyState from '@/Components/ui/EmptyState';
-import Avatar from '@/Components/ui/Avatar';
+import { AvatarStack } from '@/Components/ui/Avatar';
 import { StatusBadge, PriorityBadge, DueBadge } from '@/Components/ui/Badge';
-import { STATUSES, normalizeStatus, isDone } from '@/lib/taskMeta';
+import { STATUSES, normalizeStatus, isDone, assigneesOf } from '@/lib/taskMeta';
 import { toast } from '@/Components/ui/Toaster';
 import { changeStatus, CompleteToggle } from '@/Components/Tasks/CompleteToggle';
 
@@ -33,9 +33,9 @@ function TaskRow({ task, canEdit }) {
             <div className="hidden w-28 sm:block"><StatusBadge status={task.status} /></div>
             <div className="hidden w-28 md:block"><PriorityBadge priority={task.priority} /></div>
             <div className="hidden w-36 sm:block">{task.due_date ? <DueBadge date={task.due_date} done={done} /> : <span className="text-xs text-gray-300">—</span>}</div>
-            <div className="flex w-8 justify-end">
-                {task.assignee
-                    ? <Avatar name={task.assignee.name} size="sm" title={`Assignée à ${task.assignee.name}`} />
+            <div className="flex w-16 justify-end">
+                {assigneesOf(task).length
+                    ? <AvatarStack names={assigneesOf(task).map((u) => u.name)} max={3} />
                     : <span className="h-6 w-6 rounded-full border border-dashed border-gray-300" title="Non assignée" />}
             </div>
         </li>
@@ -174,7 +174,7 @@ function Kanban({ tasks, canEdit }) {
 
 export default function TaskIndex({ tasks = [], filters = {}, canEdit = true }) {
     const isKanban = filters.view === 'kanban';
-    const hasFilters = !!(filters.search || filters.status || filters.priority);
+    const hasFilters = !!(filters.search || filters.status || filters.priority || filters.mine);
     const openCount = tasks.filter((t) => !isDone(t.status)).length;
 
     return (
@@ -216,7 +216,7 @@ export default function TaskIndex({ tasks = [], filters = {}, canEdit = true }) 
                             <span className="w-28">Statut</span>
                             <span className="hidden w-28 md:block">Priorité</span>
                             <span className="w-36">Échéance</span>
-                            <span className="w-8" />
+                            <span className="w-16 text-right">Assignés</span>
                         </div>
                         <ul className="divide-y divide-gray-100">
                             {tasks.map((task) => <TaskRow key={task.id} task={task} canEdit={canEdit} />)}

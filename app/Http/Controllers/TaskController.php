@@ -27,6 +27,22 @@ class TaskController extends Controller
         return $project;
     }
 
+    /** Assignés valides (membres du projet uniquement), le premier reste l'assigné principal. */
+    private function assigneeIds(array $data, Project $project): array
+    {
+        $ids = collect($data['assignee_ids'] ?? [])
+            ->when(empty($data['assignee_ids']) && !empty($data['assignee_id']), fn ($c) => $c->push($data['assignee_id']))
+            ->map(fn ($id) => (int) $id)->unique()->values();
+        $memberIds = $project->members()->pluck('users.id')->push($project->owner_id);
+
+        return $ids->filter(fn ($id) => $memberIds->contains($id))->values()->all();
+    }
+
+    private function applyAssignees(Task $task, Project $project, array $data): void
+    {
+        $task->assignee_id = $this->assigneeIds($data, $project)[0] ?? null;
+    }
+
     public function index(Request $request)
     {
         $project = $this->getActiveProject();
@@ -40,8 +56,13 @@ class TaskController extends Controller
         $view     = $request->view ? $request->view : 'list';
 
         $query = Task::where('project_id', $project->id)
-            ->with(['assignee:id,name'])
+            ->with(['assignee:id,name', 'assignedUsers:id,name'])
             ->withCount('subtasks');
+
+        if ($request->boolean('mine')) {
+            $me = auth()->id();
+            $query->where(fn ($q) => $q->where('assignee_id', $me)->orWhereHas('assignedUsers', fn ($a) => $a->where('users.id', $me)));
+        }
 
         if ($status) {
             $query->where('status', $status);
@@ -69,6 +90,7 @@ class TaskController extends Controller
                 'priority' => $priority,
                 'search'   => $search,
                 'view'     => $view,
+                'mine'     => $request->boolean('mine') ? '1' : null,
             ],
             'canEdit' => $project->canEdit(auth()->user()),
             'members' => $project->members()->select('users.id', 'users.name')->orderBy('users.name')->get(),
@@ -111,6 +133,8 @@ class TaskController extends Controller
             'priority'       => 'required|in:low,medium,high,critical',
             'due_date'       => 'nullable|date',
             'assignee_id'    => 'nullable|exists:users,id',
+            'assignee_ids'   => 'nullable|array',
+            'assignee_ids.*' => 'integer|exists:users,id',
             'parent_task_id' => 'nullable|exists:tasks,id',
         ]);
 
@@ -125,7 +149,10 @@ class TaskController extends Controller
         $task->due_date       = $data['due_date'] ?? null;
         $task->assignee_id    = $data['assignee_id'] ?? null;
         $task->parent_task_id = $data['parent_task_id'] ?? null;
+        $this->applyAssignees($task, $project, $data);
         $task->save();
+        $task->assignedUsers()->sync($this->assigneeIds($data, $project));
+        \App\Support\Notify::taskAssigned($task, $task->assignedUsers()->pluck('users.id'), auth()->user());
 
         ActivityLog::record(
             $project,
@@ -149,7 +176,7 @@ class TaskController extends Controller
             abort(403);
         }
 
-        $task->load(['assignee:id,name', 'user:id,name', 'subtasks', 'parent:id,title', 'attachments', 'comments.user:id,name']);
+        $task->load(['assignee:id,name', 'assignedUsers:id,name', 'user:id,name', 'subtasks', 'parent:id,title', 'attachments', 'comments.user:id,name']);
 
         foreach ($task->comments as $comment) {
             $comment->can_delete = $comment->user_id == auth()->id();
@@ -158,6 +185,7 @@ class TaskController extends Controller
         return Inertia::render('Tasks/Show', [
             'task'    => $task,
             'canEdit' => $project->canEdit(auth()->user()),
+            'members' => $project->members()->select('users.id', 'users.name')->orderBy('users.name')->get(),
         ]);
     }
 
@@ -174,6 +202,8 @@ class TaskController extends Controller
             ->select('id', 'title')
             ->orderBy('title')
             ->get();
+
+        $task->load('assignedUsers:id');
 
         return Inertia::render('Tasks/Edit', [
             'task'        => $task,
@@ -197,6 +227,8 @@ class TaskController extends Controller
             'priority'       => 'required|in:low,medium,high,critical',
             'due_date'       => 'nullable|date',
             'assignee_id'    => 'nullable|exists:users,id',
+            'assignee_ids'   => 'nullable|array',
+            'assignee_ids.*' => 'integer|exists:users,id',
             'parent_task_id' => 'nullable|exists:tasks,id',
         ]);
 
@@ -208,7 +240,12 @@ class TaskController extends Controller
         $task->due_date       = $data['due_date'] ?? null;
         $task->assignee_id    = $data['assignee_id'] ?? null;
         $task->parent_task_id = $data['parent_task_id'] ?? null;
+        $this->applyAssignees($task, $project, $data);
         $task->save();
+        $before = $task->assignedUsers()->pluck('users.id');
+        $after = collect($this->assigneeIds($data, $project));
+        $task->assignedUsers()->sync($after);
+        \App\Support\Notify::taskAssigned($task, $after->diff($before), auth()->user());
 
         ActivityLog::record(
             $project,

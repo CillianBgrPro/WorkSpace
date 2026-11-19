@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
 import { Bars3BottomLeftIcon, RectangleStackIcon } from '@heroicons/react/16/solid';
 import { DueBadge, PriorityBadge } from '@/Components/ui/Badge';
-import Avatar from '@/Components/ui/Avatar';
-import { isDone } from '@/lib/taskMeta';
+import { AvatarStack } from '@/Components/ui/Avatar';
+import { isDone, assigneesOf } from '@/lib/taskMeta';
 
 /** Carte de tâche (kanban) : titre, priorité, échéance, assigné. */
 export default function TaskCard({ task, dragging = false }) {
@@ -32,7 +32,7 @@ export default function TaskCard({ task, dragging = false }) {
                     </span>
                 )}
                 <span className="ml-auto">
-                    {task.assignee ? <Avatar name={task.assignee.name} size="sm" title={`Assignée à ${task.assignee.name}`} /> : null}
+                    <AvatarStack names={assigneesOf(task).map((u) => u.name)} max={3} />
                 </span>
             </div>
         </Link>

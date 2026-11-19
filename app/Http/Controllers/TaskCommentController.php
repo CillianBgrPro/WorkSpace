@@ -10,10 +10,8 @@ class TaskCommentController extends Controller
 {
     public function store(Request $request, Task $task)
     {
-        // verif que la tache appartient bien a l'user connecté
-        if ($task->user_id != auth()->id()) {
-            abort(403);
-        }
+        // Tout membre du projet peut commenter (lecteurs compris).
+        abort_unless($task->project && $task->project->isMember(auth()->user()), 403);
 
         $request->validate([
             'body' => 'required|string|max:2000',
@@ -25,15 +23,16 @@ class TaskCommentController extends Controller
         $comment->body = $request->body;
         $comment->save();
 
+        \App\Support\Notify::commentAdded($comment, auth()->user());
+
         return redirect()->route('tasks.show', $task)->with('success', 'Commentaire ajouté.');
     }
 
     public function destroy(Request $request, TaskComment $comment)
     {
-        // on verifie que c'est bien le proprio de la tache
-        if ($comment->task->user_id != auth()->id()) {
-            abort(403);
-        }
+        // L'auteur du commentaire, ou un administrateur du projet.
+        $project = $comment->task->project;
+        abort_unless($comment->user_id === auth()->id() || ($project && $project->isAdmin(auth()->user())), 403);
 
         $comment->delete();
 

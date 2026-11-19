@@ -5,6 +5,7 @@ import { Card } from '@/Components/ui/Card';
 import Kbd, { modKey } from '@/Components/ui/Kbd';
 import { STATUSES, PRIORITIES, normalizeStatus } from '@/lib/taskMeta';
 import { toInputDate } from '@/lib/format';
+import AssigneePicker from '@/Components/Tasks/AssigneePicker';
 
 /**
  * Formulaire de tâche (création et édition). Il soumet lui-même pour que
@@ -18,7 +19,7 @@ export default function TaskForm({ task = null, defaults = {}, users = [], paren
         status: normalizeStatus(task?.status ?? defaults.status ?? 'todo'),
         priority: task?.priority ?? 'medium',
         due_date: toInputDate(task?.due_date),
-        assignee_id: task?.assignee_id ?? '',
+        assignee_ids: task?.assigned_users?.length ? task.assigned_users.map((u) => u.id) : task?.assignee_id ? [task.assignee_id] : [],
         parent_task_id: task?.parent_task_id ?? defaults.parent_task_id ?? '',
     });
 
@@ -77,13 +78,8 @@ export default function TaskForm({ task = null, defaults = {}, users = [], paren
                         {(p) => <Input {...p} type="date" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />}
                     </Field>
 
-                    <Field label="Assignée à" error={errors.assignee_id}>
-                        {(p) => (
-                            <Select {...p} value={data.assignee_id} onChange={(e) => setData('assignee_id', e.target.value)}>
-                                <option value="">Personne</option>
-                                {users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
-                            </Select>
-                        )}
+                    <Field label="Assignés" optional error={errors.assignee_ids || errors.assignee_id} hint="Ils seront notifiés.">
+                        {(p) => <AssigneePicker id={p.id} users={users} value={data.assignee_ids} onChange={(v) => setData('assignee_ids', v)} />}
                     </Field>
 
                     <Field label="Sous-tâche de" optional error={errors.parent_task_id}>

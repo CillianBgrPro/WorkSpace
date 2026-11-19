@@ -84,8 +84,9 @@ class DashboardController extends Controller
         // ── Mes tâches & retards ──────────────────────────────────────────
         $openStatuses = ['todo', 'in_progress', 'doing'];
 
+        $me = auth()->id();
         $myTasks = Task::where('project_id', $project->id)
-            ->where('assignee_id', auth()->id())
+            ->where(fn ($q) => $q->where('assignee_id', $me)->orWhereHas('assignedUsers', fn ($a) => $a->where('users.id', $me)))
             ->whereIn('status', $openStatuses)
             ->orderByRaw('CASE WHEN due_date IS NULL THEN 1 ELSE 0 END')
             ->orderBy('due_date')

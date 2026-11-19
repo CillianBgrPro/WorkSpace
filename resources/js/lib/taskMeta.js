@@ -21,3 +21,9 @@ export function normalizeStatus(status) {
 }
 
 export const isDone = (status) => normalizeStatus(status) === 'done';
+
+/** Personnes assignées : la liste multiple si présente, sinon l'assigné principal. */
+export function assigneesOf(task) {
+    if (task.assigned_users?.length) return task.assigned_users;
+    return task.assignee ? [task.assignee] : [];
+}

@@ -23,7 +23,7 @@ export default function TaskFilters({ filters, count }) {
         return () => clearTimeout(t);
     }, [search]);
 
-    const hasFilters = !!(filters.search || filters.status || filters.priority);
+    const hasFilters = !!(filters.search || filters.status || filters.priority || filters.mine);
     const view = filters.view === 'kanban' ? 'kanban' : 'list';
 
     return (
@@ -62,6 +62,17 @@ export default function TaskFilters({ filters, count }) {
                     <option value="">Toutes priorités</option>
                     {Object.entries(PRIORITIES).map(([k, p]) => <option key={k} value={k}>{p.label}</option>)}
                 </Select>
+
+                <button
+                    type="button"
+                    onClick={() => apply(filters, { mine: filters.mine ? null : '1' })}
+                    aria-pressed={!!filters.mine}
+                    className={`col-span-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium shadow-sm ring-1 ring-inset transition sm:col-span-1 ${
+                        filters.mine ? 'bg-indigo-50 text-indigo-700 ring-indigo-300' : 'bg-white text-gray-700 ring-gray-300 hover:bg-gray-50'
+                    }`}
+                >
+                    Mes tâches
+                </button>
 
                 {/* Bascule Liste / Kanban */}
                 <div className="col-span-2 flex rounded-lg bg-gray-200/70 p-0.5 sm:col-span-1" role="group" aria-label="Affichage">
