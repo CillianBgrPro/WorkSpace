@@ -8,7 +8,8 @@ import Button from '@/Components/ui/Button';
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
-        email: '',
+        // Prérempli depuis un lien d'invitation (?email=…)
+        email: typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('email') ?? '' : '',
         password: '',
         password_confirmation: '',
     });

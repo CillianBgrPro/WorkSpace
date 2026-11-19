@@ -4,6 +4,7 @@ import PageHeader from '@/Components/ui/PageHeader';
 import Button from '@/Components/ui/Button';
 import { confirmDelete } from '@/Components/ui/ConfirmDialog';
 import { formatMoney, formatDate, formatShortDate } from '@/lib/format';
+import useCanEdit from '@/hooks/useCanEdit';
 import { 
     TrashIcon, 
     PaperClipIcon, 
@@ -16,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function ShowBudget({ budget }) {
+    const canEdit = useCanEdit();
     const { data, setData, post, processing, errors } = useForm({
         category_name: '',
         category_color: '#6366f1',
@@ -86,7 +88,7 @@ export default function ShowBudget({ budget }) {
                     back={{ href: '/budgets', label: 'Budgets' }}
                     title={budget.name}
                     description={`${formatDate(budget.start_date)}${budget.end_date ? ` → ${formatDate(budget.end_date)}` : ' · sans date de fin'}`}
-                    actions={<Button variant="secondary" href={`/budgets/${budget.id}/edit`} icon={PencilSquareIcon}>Modifier</Button>}
+                    actions={canEdit && <Button variant="secondary" href={`/budgets/${budget.id}/edit`} icon={PencilSquareIcon}>Modifier</Button>}
                 />
 
                 {/* Main Budget Card */}
@@ -213,13 +215,13 @@ export default function ShowBudget({ budget }) {
                                                     <span className="text-sm font-bold dark:text-white">
                                                         {formatMoney(cat.total_expenses)}
                                                     </span>
-                                                    <button 
+                                                    {canEdit && <button 
                                                         onClick={() => deleteCategory(cat.id, cat.name)}
                                                         className="sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 p-1 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 rounded transition"
                                                         title="Supprimer la catégorie et ses dépenses"
                                                     >
                                                         <TrashIcon className="w-4 h-4" />
-                                                    </button>
+                                                    </button>}
                                                 </div>
                                             </div>
                                             {/* Small Category Progress Indicator */}
@@ -242,7 +244,7 @@ export default function ShowBudget({ budget }) {
                         </div>
 
                         {/* Add Category Form */}
-                        <form onSubmit={addCategory} className="pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                        {canEdit && <form onSubmit={addCategory} className="pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
                             <span className="block text-xs font-semibold text-gray-400 uppercase tracking-wider">Créer une catégorie</span>
                             <div>
                                 <input
@@ -275,14 +277,14 @@ export default function ShowBudget({ budget }) {
                                     Créer
                                 </button>
                             </div>
-                        </form>
+                        </form>}
                     </div>
 
                     {/* Right Column: Transactions & Add Expense */}
                     <div className="lg:col-span-2 space-y-6">
                         
                         {/* Panel: Add Expense */}
-                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
+                        {canEdit && <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
                             <div>
                                 <h3 className="text-lg font-bold dark:text-white">Nouvelle dépense</h3>
                                 <p className="text-xs text-gray-400">Catégorie et date sont conservées pour enchaîner les saisies.</p>
@@ -381,7 +383,7 @@ export default function ShowBudget({ budget }) {
                                     Ajouter la dépense
                                 </button>
                             </form>
-                        </div>
+                        </div>}
 
                         {/* Panel: Transaction History */}
                         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200/80">
@@ -421,13 +423,13 @@ export default function ShowBudget({ budget }) {
                                                     <span className="font-extrabold text-sm dark:text-white text-right shrink-0">
                                                         -{formatMoney(exp.amount)}
                                                     </span>
-                                                    <button
+                                                    {canEdit && <button
                                                         onClick={() => deleteExpense(exp.id)}
                                                         className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 dark:text-gray-500 dark:hover:text-red-400 transition"
                                                         title="Supprimer la transaction"
                                                     >
                                                         <TrashIcon className="w-4 h-4" />
-                                                    </button>
+                                                    </button>}
                                                 </div>
                                             </div>
 

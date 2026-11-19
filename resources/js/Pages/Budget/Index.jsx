@@ -7,6 +7,7 @@ import Button from '@/Components/ui/Button';
 import EmptyState from '@/Components/ui/EmptyState';
 import { Badge } from '@/Components/ui/Badge';
 import { formatMoney, formatShortDate } from '@/lib/format';
+import useCanEdit from '@/hooks/useCanEdit';
 
 export function budgetTone(budget) {
     if (budget.percentage_consumed >= 100) return { bar: 'bg-rose-500', text: 'text-rose-600', label: 'Dépassé', badge: 'bg-rose-50 text-rose-700 ring-rose-200' };
@@ -59,6 +60,7 @@ function BudgetCard({ budget }) {
 export default function BudgetIndex({ budgets }) {
     const active = budgets.filter((b) => b.status !== 'archived');
     const archived = budgets.filter((b) => b.status === 'archived');
+    const canEdit = useCanEdit();
 
     return (
         <AppLayout header="Budget">
@@ -70,7 +72,7 @@ export default function BudgetIndex({ budgets }) {
                 actions={
                     <>
                         <Button variant="secondary" href={route('reports.expenses.csv')} external icon={ArrowDownTrayIcon}>Exporter</Button>
-                        <Button href="/budgets/create" icon={PlusIcon}>Nouveau budget</Button>
+                        {canEdit && <Button href="/budgets/create" icon={PlusIcon}>Nouveau budget</Button>}
                     </>
                 }
             />
@@ -80,7 +82,7 @@ export default function BudgetIndex({ budgets }) {
                     icon={CurrencyEuroIcon}
                     title="Aucun budget pour ce projet"
                     description="Créez une enveloppe pour suivre les dépenses et être alerté avant de la dépasser."
-                    action={<Button href="/budgets/create" icon={PlusIcon}>Créer un budget</Button>}
+                    action={canEdit && <Button href="/budgets/create" icon={PlusIcon}>Créer un budget</Button>}
                 />
             ) : (
                 <div className="space-y-8">

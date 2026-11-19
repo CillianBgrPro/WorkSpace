@@ -13,6 +13,7 @@ import useMediaQuery from '@/hooks/useMediaQuery';
 import PageHeader from '@/Components/ui/PageHeader';
 import Button from '@/Components/ui/Button';
 import { toast } from '@/Components/ui/Toaster';
+import useCanEdit from '@/hooks/useCanEdit';
 
 const localDate = () => {
     const d = new Date();
@@ -25,11 +26,12 @@ export default function CalendarIndex({ events, users, teams }) {
 
     const [announce, setAnnounce] = useState('');
     const isMobile = useMediaQuery('(max-width: 767px)');
+    const canEdit = useCanEdit();
     // Sous 1024 px (tablette, ou mobile), la barre d'outils complète ne tient pas sur une ligne.
     const isCompact = useMediaQuery('(max-width: 1023px)');
 
 
-    const openNew = (dateStr = localDate()) => setModal({ open: true, event: null, dateStr: dateStr.slice(0, 10) });
+    const openNew = (dateStr = localDate()) => canEdit && setModal({ open: true, event: null, dateStr: dateStr.slice(0, 10) });
 
     // « Nouvel événement » depuis la palette ou le dashboard : /calendar?new=1
     useEffect(() => {
@@ -82,8 +84,8 @@ export default function CalendarIndex({ events, users, teams }) {
 
             <PageHeader
                 title="Calendrier"
-                description={isMobile ? 'Touchez un jour pour y ajouter un événement.' : 'Cliquez sur un jour pour ajouter un événement, glissez-déposez pour le déplacer.'}
-                actions={<Button icon={PlusIcon} onClick={() => openNew()}>Nouvel événement</Button>}
+                description={!canEdit ? 'Consultation seule : vous avez un accès lecteur à ce projet.' : isMobile ? 'Touchez un jour pour y ajouter un événement.' : 'Cliquez sur un jour pour ajouter un événement, glissez-déposez pour le déplacer.'}
+                actions={canEdit && <Button icon={PlusIcon} onClick={() => openNew()}>Nouvel événement</Button>}
             />
 
             <div className="rounded-xl border border-gray-200/80 bg-white p-3 shadow-sm md:p-5">
@@ -114,8 +116,8 @@ export default function CalendarIndex({ events, users, teams }) {
                     }}
                     themeSystem="standard"
                     events={events}
-                    editable={true}
-                    selectable={true}
+                    editable={canEdit}
+                    selectable={canEdit}
                     eventAllow={() => true}
                     dateClick={handleDateClick}
                     eventClick={handleEventClick}

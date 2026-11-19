@@ -5,8 +5,10 @@ import PageHeader from '@/Components/ui/PageHeader';
 import Button from '@/Components/ui/Button';
 import EmptyState from '@/Components/ui/EmptyState';
 import { AvatarStack } from '@/Components/ui/Avatar';
+import useCanEdit from '@/hooks/useCanEdit';
 
 export default function TeamIndex({ teams }) {
+    const canEdit = useCanEdit();
     return (
         <AppLayout header="Équipes">
             <Head title="Équipes" />
@@ -14,7 +16,7 @@ export default function TeamIndex({ teams }) {
             <PageHeader
                 title="Équipes"
                 description="Regroupez les membres du projet par pôle pour les inviter d'un coup aux événements."
-                actions={<Button href="/teams/create" icon={PlusIcon}>Nouvelle équipe</Button>}
+                actions={canEdit && <Button href="/teams/create" icon={PlusIcon}>Nouvelle équipe</Button>}
             />
 
             {teams.length === 0 ? (
@@ -22,7 +24,7 @@ export default function TeamIndex({ teams }) {
                     icon={UsersIcon}
                     title="Aucune équipe"
                     description="Créez une équipe (ex. « Front-end », « Design ») et ajoutez-y des membres du projet."
-                    action={<Button href="/teams/create" icon={PlusIcon}>Créer une équipe</Button>}
+                    action={canEdit && <Button href="/teams/create" icon={PlusIcon}>Créer une équipe</Button>}
                 />
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

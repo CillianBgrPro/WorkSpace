@@ -18,7 +18,7 @@ const ROLES = {
     admin: { label: 'Administrateur', className: 'bg-violet-50 text-violet-700 ring-violet-200' },
     editor: { label: 'Éditeur', className: 'bg-sky-50 text-sky-700 ring-sky-200' },
     member: { label: 'Membre', className: 'bg-sky-50 text-sky-700 ring-sky-200' },
-    viewer: { label: 'Lecteur', className: 'bg-gray-50 text-gray-600 ring-gray-200' },
+    viewer: { label: 'Lecteur', className: 'bg-amber-50 text-amber-700 ring-amber-200' },
 };
 
 function greeting() {
@@ -192,9 +192,9 @@ export default function Dashboard({ stats, myTasks = [], upcomingDeadlines = [],
                         <div className="grid grid-cols-2 gap-2">
                             {[
                                 canEdit && ['/tasks/create', PlusIcon, 'Tâche'],
-                                ['/calendar?new=1', CalendarDaysIcon, 'Événement'],
-                                ['/budgets', CurrencyEuroIcon, 'Dépense'],
-                                activeProject && [`/projects/${activeProject.id}?invite=1`, UserPlusIcon, 'Inviter'],
+                                canEdit && ['/calendar?new=1', CalendarDaysIcon, 'Événement'],
+                                canEdit && ['/budgets', CurrencyEuroIcon, 'Dépense'],
+                                ['owner', 'admin'].includes(userRole) && activeProject && [`/projects/${activeProject.id}?invite=1`, UserPlusIcon, 'Inviter'],
                             ].filter(Boolean).map(([href, Icon, label]) => (
                                 <Link key={label} href={href} className="flex flex-col items-center gap-1.5 rounded-lg border border-gray-200 px-2 py-3 text-xs font-medium text-gray-600 transition hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-700">
                                     <Icon className="h-5 w-5" />

@@ -35,10 +35,13 @@ class HandleInertiaRequests extends Middleware
         if ($request->user() && session('active_project_id')) {
             $project = Project::find(session('active_project_id'));
             if ($project && $project->isMember($request->user())) {
+                $role = $project->getMemberRole($request->user());
                 $activeProject = [
-                    'id'    => $project->id,
-                    'name'  => $project->name,
-                    'color' => $project->color,
+                    'id'       => $project->id,
+                    'name'     => $project->name,
+                    'color'    => $project->color,
+                    'role'     => $role,
+                    'can_edit' => in_array($role, ['owner', 'admin', 'editor'], true),
                 ];
             }
         }

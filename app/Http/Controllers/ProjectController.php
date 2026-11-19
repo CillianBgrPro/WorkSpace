@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\User;
+use App\Models\ProjectInvitation;
+use App\Notifications\ProjectInvitationNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 
 class ProjectController extends Controller
@@ -98,45 +101,108 @@ class ProjectController extends Controller
     }
 
     /**
-     * Ajoute un membre au projet par email.
+     * Invite une personne par e-mail : ajout direct si elle a déjà un compte,
+     * sinon e-mail d'invitation avec un lien pour créer son compte et rejoindre le projet.
      */
     public function addMember(Request $request, Project $project)
     {
-        if (!$project->isOwner(auth()->user())) {
-            abort(403, 'Seul le propriétaire peut ajouter des membres.');
+        if (!$project->isAdmin(auth()->user())) {
+            abort(403, 'Seuls le propriétaire et les administrateurs peuvent inviter.');
         }
 
         $data = $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email|max:255',
+            'role'  => 'nullable|in:admin,editor,viewer',
+        ], [
+            'email.required' => "Indiquez l'adresse e-mail de la personne à inviter.",
+            'email.email'    => "Cette adresse e-mail n'est pas valide.",
         ]);
+        $email = strtolower(trim($data['email']));
+        $role = $data['role'] ?? 'editor';
 
-        $user = User::where('email', $data['email'])->first();
+        $user = User::whereRaw('lower(email) = ?', [$email])->first();
 
-        if ($project->isMember($user)) {
-            return back()->withErrors(['email' => 'Cet utilisateur est déjà membre de ce projet.']);
+        if ($user) {
+            if ($project->isMember($user)) {
+                return back()->withErrors(['email' => "{$user->name} fait déjà partie du projet."]);
+            }
+            $project->members()->attach($user->id, ['role' => $role]);
+            $user->notify(new \App\Notifications\AddedToProjectNotification($project, auth()->user()));
+
+            return back()->with('success', "{$user->name} a été ajouté au projet.");
         }
 
-        $project->members()->attach($user->id, ['role' => 'member']);
+        $invitation = ProjectInvitation::issue($project, auth()->user(), $email, $role);
+        Notification::route('mail', $email)->notify(new ProjectInvitationNotification($invitation));
 
-        return back()->with('success', "{$user->name} a été ajouté au projet.");
+        return back()->with('success', "Invitation envoyée à {$email}.");
+    }
+
+    /** Change le rôle d'un membre (pas celui du propriétaire). */
+    public function updateMemberRole(Request $request, Project $project, User $user)
+    {
+        if (!$project->isAdmin(auth()->user()) || $project->owner_id === $user->id) {
+            abort(403);
+        }
+        // Un administrateur ne peut pas promouvoir/rétrograder d'autres administrateurs : réservé au propriétaire.
+        $current = $project->getMemberRole($user);
+        $data = $request->validate(['role' => 'required|in:admin,editor,viewer']);
+        if (!$project->isOwner(auth()->user()) && ($current === 'admin' || $data['role'] === 'admin')) {
+            abort(403, 'Seul le propriétaire gère les administrateurs.');
+        }
+
+        $project->members()->updateExistingPivot($user->id, ['role' => $data['role']]);
+
+        $labels = ['admin' => 'administrateur', 'editor' => 'éditeur', 'viewer' => 'lecteur'];
+
+        return back()->with('success', "{$user->name} est maintenant {$labels[$data['role']]}.");
     }
 
     /**
-     * Retire un membre du projet (owner uniquement, ne peut pas retirer l'owner lui-même).
+     * Retire un membre du projet (propriétaire ou admin ; jamais le propriétaire lui-même).
      */
     public function removeMember(Request $request, Project $project, User $user)
     {
-        if (!$project->isOwner(auth()->user())) {
-            abort(403, 'Seul le propriétaire peut retirer des membres.');
+        $self = auth()->id() === $user->id;
+        if (!$self && !$project->isAdmin(auth()->user())) {
+            abort(403, 'Seuls le propriétaire et les administrateurs peuvent retirer des membres.');
         }
 
         if ($project->owner_id === $user->id) {
             return back()->withErrors(['member' => 'Impossible de retirer le propriétaire du projet.']);
         }
+        if (!$self && !$project->isOwner(auth()->user()) && $project->getMemberRole($user) === 'admin') {
+            abort(403, 'Seul le propriétaire peut retirer un administrateur.');
+        }
 
         $project->members()->detach($user->id);
 
+        if ($self) {
+            session()->forget(['active_project_id', 'active_project_name', 'active_project_color']);
+
+            return redirect()->route('projects.index')->with('success', "Vous avez quitté « {$project->name} ».");
+        }
+
         return back()->with('success', "{$user->name} a été retiré du projet.");
+    }
+
+    public function resendInvitation(Project $project, ProjectInvitation $invitation)
+    {
+        abort_unless($project->isAdmin(auth()->user()) && $invitation->project_id === $project->id, 403);
+
+        $invitation = ProjectInvitation::issue($project, auth()->user(), $invitation->email, $invitation->role);
+        Notification::route('mail', $invitation->email)->notify(new ProjectInvitationNotification($invitation));
+
+        return back()->with('success', "Invitation renvoyée à {$invitation->email}.");
+    }
+
+    public function cancelInvitation(Project $project, ProjectInvitation $invitation)
+    {
+        abort_unless($project->isAdmin(auth()->user()) && $invitation->project_id === $project->id, 403);
+
+        $invitation->delete();
+
+        return back()->with('success', 'Invitation annulée.');
     }
 
     /**
@@ -150,10 +216,18 @@ class ProjectController extends Controller
 
         $project->load(['owner:id,name,email', 'members:id,name,email']);
 
+        $canManage = $project->isAdmin(auth()->user());
+
         return Inertia::render('Projects/Show', [
             'project' => array_merge($project->toArray(), [
-                'is_owner' => $project->isOwner(auth()->user()),
+                'is_owner'   => $project->isOwner(auth()->user()),
+                'can_manage' => $canManage,
+                'my_role'    => $project->getMemberRole(auth()->user()),
             ]),
+            'invitations' => $canManage
+                ? ProjectInvitation::where('project_id', $project->id)->whereNull('accepted_at')
+                    ->with('inviter:id,name')->latest()->get(['id', 'email', 'role', 'invited_by', 'expires_at', 'created_at'])
+                : [],
         ]);
     }
 }

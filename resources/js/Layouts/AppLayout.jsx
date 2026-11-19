@@ -204,7 +204,7 @@ export default function AppLayout({ children, header }) {
         // ⌘/Ctrl + Entrée : enregistre le formulaire en cours d'édition.
         'mod+Enter': () => document.activeElement?.closest('form')?.requestSubmit(),
         '?': () => setHelpOpen(true),
-        n: () => router.visit('/tasks/create'),
+        n: () => activeProject?.can_edit !== false && router.visit('/tasks/create'),
         '/': () => document.querySelector('[data-page-search]')?.focus(),
         'g d': () => router.visit(dashboardHref),
         'g t': () => router.visit('/tasks'),
@@ -279,6 +279,11 @@ export default function AppLayout({ children, header }) {
                             </>
                         )}
                         <span className="truncate font-semibold text-gray-900">{header}</span>
+                        {activeProject?.can_edit === false && (
+                            <span className="shrink-0 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-200" title="Vous pouvez consulter ce projet mais pas le modifier">
+                                Lecture seule
+                            </span>
+                        )}
                     </nav>
 
                     <div className="ml-auto flex items-center gap-1.5">

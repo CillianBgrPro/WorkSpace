@@ -17,6 +17,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PaletteController;
 use App\Http\Controllers\CalendarFeedController;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
 
 // page d'accueil
@@ -47,6 +48,11 @@ Route::get('/dashboard', function () {
     return redirect()->route('projects.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Lien d'invitation à un projet (accessible connecté ou non)
+Route::get('/invitations/{token}', [InvitationController::class, 'show'])
+    ->where('token', '[A-Za-z0-9]{48}')
+    ->name('invitations.show');
+
 // Flux iCal personnel (sans session, protégé par un jeton secret)
 Route::get('/calendar/feed/{token}.ics', CalendarFeedController::class)
     ->where('token', '[A-Za-z0-9]{48}')
@@ -71,6 +77,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('projects.destroy');
     Route::post('/projects/{project}/members', [ProjectController::class, 'addMember'])->name('projects.members.add');
     Route::delete('/projects/{project}/members/{user}', [ProjectController::class, 'removeMember'])->name('projects.members.remove');
+    Route::patch('/projects/{project}/members/{user}', [ProjectController::class, 'updateMemberRole'])->name('projects.members.role');
+    Route::post('/projects/{project}/invitations/{invitation}/resend', [ProjectController::class, 'resendInvitation'])->name('projects.invitations.resend');
+    Route::delete('/projects/{project}/invitations/{invitation}', [ProjectController::class, 'cancelInvitation'])->name('projects.invitations.cancel');
 
     // fichiers de projet
     Route::get('/project-files', [ProjectFileController::class, 'index'])->name('projects.files.index');
@@ -97,9 +106,11 @@ Route::middleware('auth')->group(function () {
     // commentaires et pièces jointes des taches
     Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
     Route::delete('comments/{comment}', [TaskCommentController::class, 'destroy'])->name('comments.destroy');
-    Route::post('tasks/{task}/attachments', [TaskAttachmentController::class, 'store'])->name('tasks.attachments.store');
-    Route::delete('attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->name('attachments.destroy');
+    Route::post('tasks/{task}/attachments', [TaskAttachmentController::class, 'store'])->middleware('project.editor')->name('tasks.attachments.store');
+    Route::delete('attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->middleware('project.editor')->name('attachments.destroy');
 
+    // Modules en écriture réservée aux éditeurs (les lecteurs consultent seulement)
+    Route::middleware('project.editor')->group(function () {
     // calendrier
     Route::get('/calendar', [EventController::class, 'index'])->name('calendar.index');
     Route::post('/calendar', [EventController::class, 'store'])->name('calendar.store');
@@ -137,6 +148,7 @@ Route::middleware('auth')->group(function () {
     Route::post('budgets/{budget}/expenses', [ExpenseController::class, 'store'])->name('budgets.expenses.store');
     Route::patch('expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
     Route::delete('expenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
+    });
 
 });
 
