@@ -52,7 +52,8 @@ class RunBackup extends Command
             'Sauvegarde WorkSpace',
             'Date : ' . now()->format('d/m/Y H:i:s'),
             "Fichiers : {$count}",
-            'Version : ' . trim((string) @shell_exec('git -C ' . escapeshellarg(base_path()) . ' log --oneline -1 2>/dev/null')),
+            // safe.directory : le dépôt appartient à root alors que la sauvegarde tourne sous www-data.
+            'Version : ' . trim((string) @shell_exec('git -c safe.directory=' . escapeshellarg(base_path()) . ' -C ' . escapeshellarg(base_path()) . ' log --oneline -1 2>/dev/null')),
         ]) . "\n");
         $zip->close();
         $this->line("Fichiers : {$count} (" . $this->size($zipPath) . ')');
