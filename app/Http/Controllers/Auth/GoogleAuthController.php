@@ -70,11 +70,25 @@ class GoogleAuthController extends Controller
 
             if ($user) {
                 // Compte existant avec le même e-mail : on le lie à Google.
-                $user->forceFill([
+                $attributes = [
                     'google_id' => $googleUser->getId(),
                     'avatar' => $user->avatar ?? $googleUser->getAvatar(),
-                    'email_verified_at' => $user->email_verified_at ?? now(),
-                ])->save();
+                ];
+
+                // Sécurité : si l'adresse n'avait jamais été vérifiée, le compte a pu être créé par
+                // quelqu'un d'autre avec ce mot de passe (« pré-détournement »). Google prouve que la
+                // personne possède l'adresse : on invalide le mot de passe et les autres sessions.
+                if (! $user->hasVerifiedEmail()) {
+                    $attributes += [
+                        'password' => Str::password(32),
+                        'has_password' => false,
+                        'remember_token' => Str::random(60),
+                        'email_verified_at' => now(),
+                    ];
+                    \Illuminate\Support\Facades\DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+                }
+
+                $user->forceFill($attributes)->save();
             } else {
                 $user = User::forceCreate([
                     'name' => $googleUser->getName() ?: Str::before($email, '@'),

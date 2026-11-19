@@ -61,7 +61,18 @@ Route::get('/calendar/feed/{token}.ics', CalendarFeedController::class)
     ->middleware('throttle:60,1')
     ->name('calendar.feed');
 
+// Profil : accessible avant vérification de l'e-mail (pour pouvoir corriger une adresse erronée).
 Route::middleware('auth')->group(function () {
+    // Profil
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])->name('profile.preferences');
+    Route::post('/profile/calendar-token', [ProfileController::class, 'regenerateCalendarToken'])->name('profile.calendar-token');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Application : réservée aux comptes dont l'e-mail est vérifié.
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/palette', PaletteController::class)->name('palette');
 
     // Corbeille
@@ -74,12 +85,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::get('/notifications/{id}', [NotificationController::class, 'open'])->name('notifications.open');
 
-    // Profil
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::patch('/profile/preferences', [ProfileController::class, 'updatePreferences'])->name('profile.preferences');
-    Route::post('/profile/calendar-token', [ProfileController::class, 'regenerateCalendarToken'])->name('profile.calendar-token');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // projets
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');

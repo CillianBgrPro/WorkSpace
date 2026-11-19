@@ -16,6 +16,12 @@ class AcceptPendingInvitation
         }
 
         $invitation = ProjectInvitation::where('token', $token)->first();
+
+        // Le lien a été reçu sur cette adresse : elle est prouvée, inutile de la revérifier.
+        if ($invitation && $invitation->isPending() && !$event->user->hasVerifiedEmail()
+            && strcasecmp($invitation->email, $event->user->email) === 0) {
+            $event->user->markEmailAsVerified();
+        }
         if ($invitation && $invitation->isPending() && $invitation->project && $invitation->acceptFor($event->user)) {
             session([
                 'active_project_id' => $invitation->project_id,
