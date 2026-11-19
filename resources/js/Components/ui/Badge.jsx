@@ -1,5 +1,5 @@
-import { CalendarIcon } from '@heroicons/react/16/solid';
-import { STATUSES, PRIORITIES, normalizeStatus } from '@/lib/taskMeta';
+import { CalendarIcon, ArrowPathIcon } from '@heroicons/react/16/solid';
+import { STATUSES, PRIORITIES, RECURRENCES, normalizeStatus } from '@/lib/taskMeta';
 import { dueInfo } from '@/lib/format';
 
 export function Badge({ className = 'bg-gray-100 text-gray-700 ring-gray-200', children, title }) {
@@ -67,3 +67,16 @@ export function DueBadge({ date, done = false }) {
 }
 
 export default Badge;
+
+export function RecurrenceBadge({ recurrence, compact = false }) {
+    if (!RECURRENCES[recurrence]) return null;
+    if (compact) {
+        return <span title={`Récurrente : ${RECURRENCES[recurrence].toLowerCase()}`} className="text-indigo-400"><ArrowPathIcon className="h-3.5 w-3.5" /></span>;
+    }
+    return (
+        <Badge className="bg-indigo-50 text-indigo-700 ring-indigo-200" title="Tâche récurrente">
+            <ArrowPathIcon className="h-3 w-3" />
+            {RECURRENCES[recurrence]}
+        </Badge>
+    );
+}

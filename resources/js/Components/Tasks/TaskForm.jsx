@@ -3,7 +3,7 @@ import Field, { Input, Textarea, Select } from '@/Components/ui/Field';
 import Button from '@/Components/ui/Button';
 import { Card } from '@/Components/ui/Card';
 import Kbd, { modKey } from '@/Components/ui/Kbd';
-import { STATUSES, PRIORITIES, normalizeStatus } from '@/lib/taskMeta';
+import { STATUSES, PRIORITIES, RECURRENCES, normalizeStatus } from '@/lib/taskMeta';
 import { toInputDate } from '@/lib/format';
 import AssigneePicker from '@/Components/Tasks/AssigneePicker';
 
@@ -21,6 +21,7 @@ export default function TaskForm({ task = null, defaults = {}, users = [], paren
         due_date: toInputDate(task?.due_date),
         assignee_ids: task?.assigned_users?.length ? task.assigned_users.map((u) => u.id) : task?.assignee_id ? [task.assignee_id] : [],
         parent_task_id: task?.parent_task_id ?? defaults.parent_task_id ?? '',
+        recurrence: task?.recurrence ?? '',
     });
 
     const onSubmit = (e) => {
@@ -76,6 +77,15 @@ export default function TaskForm({ task = null, defaults = {}, users = [], paren
 
                     <Field label="Échéance" optional error={errors.due_date}>
                         {(p) => <Input {...p} type="date" value={data.due_date} onChange={(e) => setData('due_date', e.target.value)} />}
+                    </Field>
+
+                    <Field label="Répéter" error={errors.recurrence} hint={data.recurrence ? "Une fois terminée, la tâche est recréée avec l'échéance suivante." : undefined}>
+                        {(p) => (
+                            <Select {...p} value={data.recurrence ?? ''} onChange={(e) => setData('recurrence', e.target.value)}>
+                                <option value="">Jamais</option>
+                                {Object.entries(RECURRENCES).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+                            </Select>
+                        )}
                     </Field>
 
                     <Field label="Assignés" optional error={errors.assignee_ids || errors.assignee_id} hint="Ils seront notifiés.">

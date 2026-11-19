@@ -20,12 +20,14 @@ const localDate = () => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-export default function CalendarIndex({ events, users, teams }) {
+export default function CalendarIndex({ events, taskDeadlines = [], users, teams }) {
     const { auth } = usePage().props;
     const [modal, setModal] = useState({ open: false, event: null, dateStr: null });
 
     const [announce, setAnnounce] = useState('');
     const isMobile = useMediaQuery('(max-width: 767px)');
+    const [showTasks, setShowTasks] = useState(() => { try { return localStorage.getItem('ws.calendar.tasks') !== '0'; } catch { return true; } });
+    const toggleTasks = () => setShowTasks((v) => { try { localStorage.setItem('ws.calendar.tasks', v ? '0' : '1'); } catch { /* indisponible */ } return !v; });
     const canEdit = useCanEdit();
     // Sous 1024 px (tablette, ou mobile), la barre d'outils complète ne tient pas sur une ligne.
     const isCompact = useMediaQuery('(max-width: 1023px)');
@@ -47,6 +49,12 @@ export default function CalendarIndex({ events, users, teams }) {
 
     const handleEventClick = (info) => {
         const e = info.event;
+        // Échéance de tâche : on ouvre la tâche.
+        if (e.extendedProps.type === 'task') {
+            router.visit(`/tasks/${e.extendedProps.task_id}`);
+            return;
+        }
+        if (!canEdit) return;
         setModal({
             open: true,
             dateStr: null,
@@ -85,7 +93,15 @@ export default function CalendarIndex({ events, users, teams }) {
             <PageHeader
                 title="Calendrier"
                 description={!canEdit ? 'Consultation seule : vous avez un accès lecteur à ce projet.' : isMobile ? 'Touchez un jour pour y ajouter un événement.' : 'Cliquez sur un jour pour ajouter un événement, glissez-déposez pour le déplacer.'}
-                actions={canEdit && <Button icon={PlusIcon} onClick={() => openNew()}>Nouvel événement</Button>}
+                actions={
+                    <>
+                        <Button variant="secondary" onClick={toggleTasks} aria-pressed={showTasks} title="Afficher les échéances des tâches">
+                            <span className={`h-2.5 w-2.5 rounded-sm ${showTasks ? 'bg-amber-400' : 'border border-gray-300'}`} />
+                            Échéances
+                        </Button>
+                        {canEdit && <Button icon={PlusIcon} onClick={() => openNew()}>Nouvel événement</Button>}
+                    </>
+                }
             />
 
             <div className="rounded-xl border border-gray-200/80 bg-white p-3 shadow-sm md:p-5">
@@ -115,7 +131,7 @@ export default function CalendarIndex({ events, users, teams }) {
                         list: 'Liste',
                     }}
                     themeSystem="standard"
-                    events={events}
+                    events={showTasks ? [...events, ...taskDeadlines] : events}
                     editable={canEdit}
                     selectable={canEdit}
                     eventAllow={() => true}
@@ -128,7 +144,7 @@ export default function CalendarIndex({ events, users, teams }) {
                         return (
                             <div className={`fc-event-pill fc-event-${type}`}>
                                 {arg.timeText && <span className="fc-event-time">{arg.timeText}</span>}
-                                <span className="fc-event-title truncate">{arg.event.title}</span>
+                                <span className="fc-event-title truncate">{type === 'task' ? `✓ ${arg.event.title}` : arg.event.title}</span>
                             </div>
                         );
                     }}

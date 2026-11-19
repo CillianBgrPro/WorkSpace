@@ -8,18 +8,30 @@ const COLORS = [
     '#06b6d4', '#3b82f6', '#64748b', '#a855f7',
 ];
 
-export default function CreateProjectModal({ onClose }) {
+export default function CreateProjectModal({ onClose, templates = [], projects = [] }) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
         color: '#6366f1',
+        template: '',
+        source_project_id: '',
     });
+    const [start, setStart] = useState('blank'); // blank | template:<key> | copy
 
     const submit = (e) => {
         e.preventDefault();
         post(route('projects.store'), {
             onSuccess: () => onClose(),
         });
+    };
+
+    const choose = (value) => {
+        setStart(value);
+        setData((d) => ({
+            ...d,
+            template: value.startsWith('template:') ? value.slice(9) : '',
+            source_project_id: value === 'copy' ? (projects[0]?.id ?? '') : '',
+        }));
     };
 
     return (
@@ -95,6 +107,46 @@ export default function CreateProjectModal({ onClose }) {
                     </div>
 
                     {/* Actions */}
+                    {/* Point de départ */}
+                    <div>
+                        <p className="mb-2 block text-sm font-medium text-gray-300">Démarrer avec</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            {[
+                                ['blank', 'Projet vide', 'Partir de zéro'],
+                                ...templates.map((t) => [`template:${t.key}`, t.label, `${t.count} tâches types`]),
+                                ...(projects.length ? [['copy', 'Copier un projet', 'Reprendre ses tâches']] : []),
+                            ].map(([value, label, sub]) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => choose(value)}
+                                    aria-pressed={start === value}
+                                    className={`rounded-xl border px-3 py-2.5 text-left transition ${
+                                        start === value ? 'border-indigo-400 bg-indigo-500/20 text-white' : 'border-white/10 text-gray-300 hover:border-white/25 hover:bg-white/5'
+                                    }`}
+                                >
+                                    <span className="block text-sm font-medium">{label}</span>
+                                    <span className="block text-xs text-gray-400">{sub}</span>
+                                </button>
+                            ))}
+                        </div>
+                        {start === 'copy' && (
+                            <select
+                                value={data.source_project_id}
+                                onChange={(e) => setData('source_project_id', e.target.value)}
+                                className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:border-indigo-400 focus:ring-indigo-400"
+                                aria-label="Projet à copier"
+                            >
+                                {projects.map((p) => <option key={p.id} value={p.id} className="text-gray-900">{p.name}</option>)}
+                            </select>
+                        )}
+                        {start !== 'blank' && (
+                            <p className="mt-2 text-xs text-gray-400">
+                                {start === 'copy' ? 'Les tâches et sous-tâches sont copiées sans dates ni assignations.' : 'Les échéances sont calculées à partir d\'aujourd\'hui, ajustez-les ensuite.'}
+                            </p>
+                        )}
+                    </div>
+
                     <div className="flex gap-3 pt-2">
                         <button
                             type="button"

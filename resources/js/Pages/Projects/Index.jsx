@@ -8,7 +8,7 @@ import {
     ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 
-export default function ProjectsIndex({ projects, auth }) {
+export default function ProjectsIndex({ projects, auth, templates = [] }) {
     const [showModal, setShowModal] = useState(false);
 
     const handleDelete = async (project) => {
@@ -115,7 +115,7 @@ export default function ProjectsIndex({ projects, auth }) {
             </div>
 
             {/* Modal création */}
-            {showModal && <CreateProjectModal onClose={() => setShowModal(false)} />}
+            {showModal && <CreateProjectModal onClose={() => setShowModal(false)} templates={templates} projects={projects} />}
         </div>
     );
 }

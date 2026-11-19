@@ -38,7 +38,9 @@ class ProjectController extends Controller
         $projects = $ownedProjects->concat($memberProjects)->sortByDesc('created_at')->values();
 
         return Inertia::render('Projects/Index', [
-            'projects' => $projects,
+            'projects'  => $projects,
+            'templates' => collect(\App\Support\ProjectTemplates::all())
+                ->map(fn ($t, $key) => ['key' => $key, 'label' => $t['label'], 'count' => count($t['tasks'])])->values(),
         ]);
     }
 
@@ -51,7 +53,16 @@ class ProjectController extends Controller
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
             'color'       => 'nullable|string|max:20',
+            'template'    => 'nullable|string|in:' . implode(',', array_keys(\App\Support\ProjectTemplates::all())),
+            'source_project_id' => 'nullable|integer|exists:projects,id',
+        ], [
+            'name.required' => 'Donnez un nom au projet.',
         ]);
+
+        // Vérifie l'accès au projet copié AVANT de créer quoi que ce soit.
+        if (!empty($data['source_project_id'])) {
+            abort_unless(Project::findOrFail($data['source_project_id'])->isMember(auth()->user()), 403);
+        }
 
         $project = Project::create([
             'name'        => $data['name'],
@@ -64,8 +75,49 @@ class ProjectController extends Controller
         // Ajouter le créateur comme owner dans le pivot
         $project->members()->attach(auth()->id(), ['role' => 'owner']);
 
+        $created = 0;
+        if (!empty($data['source_project_id'])) {
+            $created = $this->duplicateTasks(Project::findOrFail($data['source_project_id']), $project);
+        } elseif (!empty($data['template'])) {
+            foreach (\App\Support\ProjectTemplates::all()[$data['template']]['tasks'] as $i => $t) {
+                \App\Models\Task::create([
+                    'user_id'    => auth()->id(),
+                    'project_id' => $project->id,
+                    'title'      => $t[0],
+                    'priority'   => $t[1],
+                    'status'     => 'todo',
+                    'due_date'   => now()->addDays($t[2])->toDateString(),
+                ])->forceFill(['position' => $i + 1, 'recurrence' => $t[3] ?? null])->save();
+                $created++;
+            }
+        }
+
+        if ($created) {
+            return redirect()->route('projects.dashboard', $project)->with('success', "Projet créé avec {$created} tâche" . ($created > 1 ? 's' : '') . ' prêtes à démarrer.');
+        }
+
         // Rediriger directement vers le dashboard du nouveau projet
         return redirect()->route('projects.dashboard', $project)->with('success', 'Projet créé avec succès.');
+    }
+
+    /** Copie la structure des tâches d'un projet (sans dates ni statut), sous-tâches comprises. */
+    private function duplicateTasks(Project $source, Project $target): int
+    {
+        abort_unless($source->isMember(auth()->user()), 403);
+
+        $tasks = \App\Models\Task::where('project_id', $source->id)->orderBy('parent_task_id')->orderBy('id')->get();
+        $map = [];
+        foreach ($tasks->sortBy(fn ($t) => $t->parent_task_id ? 1 : 0) as $task) {
+            $copy = $task->replicate(['status', 'due_date', 'assignee_id', 'parent_task_id', 'due_reminder_sent_on']);
+            $copy->project_id = $target->id;
+            $copy->user_id = auth()->id();
+            $copy->status = 'todo';
+            $copy->parent_task_id = $task->parent_task_id ? ($map[$task->parent_task_id] ?? null) : null;
+            $copy->save();
+            $map[$task->id] = $copy->id;
+        }
+
+        return count($map);
     }
 
     /**

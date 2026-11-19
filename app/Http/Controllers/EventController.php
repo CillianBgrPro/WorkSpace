@@ -75,8 +75,10 @@ class EventController extends Controller
                         'description'      => $event->description,
                         'type'             => $event->type,
                         'creator'          => $event->user->name,
-                        'teams'            => $event->teams->pluck('name'),
-                        'participants'     => $event->participants->pluck('name'),
+                        // Le formulaire d'édition attend des identifiants (participants) et des objets (équipes).
+                        'teams'            => $event->teams->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+                        'participants'     => $event->participants->pluck('id')->values(),
+                        'participant_names'=> $event->participants->pluck('name')->values(),
                         'reminder'         => $event->reminder,
                         'reminder_minutes' => $event->reminder_minutes,
                     ],
@@ -84,11 +86,28 @@ class EventController extends Controller
             }
         }
 
+        // Échéances des tâches ouvertes, affichées en lecture seule dans le calendrier.
+        $taskDeadlines = \App\Models\Task::where('project_id', $project->id)
+            ->whereNotNull('due_date')
+            ->whereNotIn('status', ['done', 'completed'])
+            ->get(['id', 'title', 'due_date', 'priority'])
+            ->map(fn ($t) => [
+                'id'              => 'task-' . $t->id,
+                'title'           => $t->title,
+                'start'           => \Carbon\Carbon::parse($t->due_date)->toDateString(),
+                'allDay'          => true,
+                'editable'        => false,
+                'classNames'      => ['fc-task-deadline'],
+                'color'           => '#f59e0b',
+                'extendedProps'   => ['type' => 'task', 'task_id' => $t->id, 'priority' => $t->priority],
+            ]);
+
         $users = $project->members()->select('users.id', 'users.name')->orderBy('users.name')->get();
         $teams = \App\Models\Team::where('project_id', $project->id)->select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('Calendar/Index', [
             'events' => $events,
+            'taskDeadlines' => $taskDeadlines,
             'users'  => $users,
             'teams'  => $teams,
         ]);

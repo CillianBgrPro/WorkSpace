@@ -100,6 +100,8 @@ Route::middleware('auth')->group(function () {
 
     // routes des taches
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::get('/my-tasks', [TaskController::class, 'mine'])->name('tasks.mine');
+    Route::patch('/tasks/reorder', [TaskController::class, 'reorder'])->name('tasks.reorder');
     Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
     Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');

@@ -38,7 +38,8 @@ export default function CommandPalette({ open, onClose, activeProject }) {
         const p = activeProject;
         const nav = [
             p && { id: 'nav-dash', group: 'Aller à', label: 'Dashboard', icon: HomeIcon, hint: 'G D', run: () => go(`/projects/${p.id}/dashboard`) },
-            { id: 'nav-tasks', group: 'Aller à', label: 'Tâches', icon: CheckCircleIcon, hint: 'G T', run: () => go('/tasks') },
+            { id: 'nav-mine', group: 'Aller à', label: 'Mes tâches (tous projets)', icon: CheckCircleIcon, hint: 'G M', run: () => go('/my-tasks') },
+            { id: 'nav-tasks', group: 'Aller à', label: 'Tâches du projet', icon: CheckCircleIcon, hint: 'G T', run: () => go('/tasks') },
             { id: 'nav-kanban', group: 'Aller à', label: 'Tâches — vue kanban', icon: Squares2X2Icon, run: () => go('/tasks?view=kanban') },
             { id: 'nav-cal', group: 'Aller à', label: 'Calendrier', icon: CalendarIcon, hint: 'G C', run: () => go('/calendar') },
             { id: 'nav-budget', group: 'Aller à', label: 'Budget', icon: CurrencyEuroIcon, hint: 'G B', run: () => go('/budgets') },

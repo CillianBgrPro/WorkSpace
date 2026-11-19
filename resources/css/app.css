@@ -294,6 +294,15 @@
     color: var(--event-text-deadline) !important;
 }
 
+/* Échéance de tâche (lecture seule, ouvre la tâche au clic) */
+.fc-event-task {
+    background-color: #fffbeb !important;
+    border-left-color: #f59e0b !important;
+    border-left-style: dashed !important;
+    color: #92400e !important;
+}
+.fc .fc-task-deadline { cursor: pointer; }
+
 .fc .fc-list {
     border-radius: 0.75rem !important;
     overflow: hidden !important;

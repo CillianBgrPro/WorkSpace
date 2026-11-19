@@ -15,6 +15,7 @@ const SECTIONS = [
     {
         title: 'Navigation',
         items: [
+            [['G', 'M'], 'Mes tâches (tous projets)'],
             [['G', 'D'], 'Dashboard'],
             [['G', 'T'], 'Tâches'],
             [['G', 'C'], 'Calendrier'],

@@ -8,7 +8,7 @@ import PageHeader from '@/Components/ui/PageHeader';
 import Button from '@/Components/ui/Button';
 import EmptyState from '@/Components/ui/EmptyState';
 import { AvatarStack } from '@/Components/ui/Avatar';
-import { StatusBadge, PriorityBadge, DueBadge } from '@/Components/ui/Badge';
+import { StatusBadge, PriorityBadge, DueBadge, RecurrenceBadge } from '@/Components/ui/Badge';
 import { STATUSES, normalizeStatus, isDone, assigneesOf } from '@/lib/taskMeta';
 import { toast } from '@/Components/ui/Toaster';
 import { changeStatus, CompleteToggle } from '@/Components/Tasks/CompleteToggle';
@@ -23,6 +23,7 @@ function TaskRow({ task, canEdit }) {
             <div className="min-w-0 flex-1">
                 <Link href={`/tasks/${task.id}`} className="block truncate text-sm font-medium text-gray-900 after:absolute after:inset-0 focus:outline-none focus-visible:underline">
                     <span className={done ? 'text-gray-400 line-through' : ''}>{task.title}</span>
+                    {task.recurrence && <span className="ml-1.5 inline-flex align-middle"><RecurrenceBadge recurrence={task.recurrence} compact /></span>}
                 </Link>
                 {/* Méta sur mobile */}
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:hidden">
@@ -98,6 +99,7 @@ function QuickAdd({ status }) {
 function Kanban({ tasks, canEdit }) {
     const [dragId, setDragId] = useState(null);
     const [overCol, setOverCol] = useState(null);
+    const [overTask, setOverTask] = useState(null); // carte au-dessus de laquelle on insère
 
     const columns = COLUMN_ORDER.map((key) => ({
         key,
@@ -105,11 +107,25 @@ function Kanban({ tasks, canEdit }) {
         items: tasks.filter((t) => normalizeStatus(t.status) === key),
     }));
 
+    // Dépôt : on enregistre l'ordre complet de la colonne cible (et le changement de statut).
     const drop = (e, key) => {
         e.preventDefault();
+        const id = Number(e.dataTransfer.getData('text/plain'));
+        const before = overTask;
         setOverCol(null);
-        const task = tasks.find((t) => String(t.id) === e.dataTransfer.getData('text/plain'));
-        if (task && normalizeStatus(task.status) !== key) changeStatus(task, key);
+        setOverTask(null);
+        setDragId(null);
+        if (!id) return;
+
+        const column = columns.find((c) => c.key === key).items.map((t) => t.id).filter((tid) => tid !== id);
+        const at = before ? column.indexOf(before) : -1;
+        column.splice(at === -1 ? column.length : at, 0, id);
+
+        const task = tasks.find((t) => t.id === id);
+        const unchanged = normalizeStatus(task?.status) === key && column.join() === columns.find((c) => c.key === key).items.map((t) => t.id).join();
+        if (unchanged) return;
+
+        router.patch(route('tasks.reorder'), { status: key, ids: column }, { preserveScroll: true, preserveState: true, only: ['tasks', 'flash'] });
     };
 
     return (
@@ -119,7 +135,7 @@ function Kanban({ tasks, canEdit }) {
                     key={col.key}
                     aria-label={col.label}
                     onDragOver={(e) => { if (canEdit) { e.preventDefault(); setOverCol(col.key); } }}
-                    onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOverCol(null); }}
+                    onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) { setOverCol(null); setOverTask(null); } }}
                     onDrop={(e) => drop(e, col.key)}
                     className={`flex w-[85%] shrink-0 snap-start flex-col rounded-xl p-2.5 transition sm:w-[60%] lg:w-auto ${
                         overCol === col.key ? 'bg-indigo-50 ring-2 ring-indigo-200' : 'bg-gray-100'
@@ -137,9 +153,19 @@ function Kanban({ tasks, canEdit }) {
                                 key={task.id}
                                 draggable={canEdit}
                                 onDragStart={(e) => { e.dataTransfer.setData('text/plain', String(task.id)); e.dataTransfer.effectAllowed = 'move'; setDragId(task.id); }}
-                                onDragEnd={() => setDragId(null)}
-                                className={canEdit ? 'cursor-grab active:cursor-grabbing' : ''}
+                                onDragEnd={() => { setDragId(null); setOverTask(null); }}
+                                onDragOver={(e) => {
+                                    if (!canEdit || task.id === dragId) return;
+                                    const r = e.currentTarget.getBoundingClientRect();
+                                    // Moitié haute : avant cette carte ; moitié basse : avant la suivante.
+                                    const next = col.items[col.items.indexOf(task) + 1];
+                                    setOverTask(e.clientY < r.top + r.height / 2 ? task.id : next?.id ?? null);
+                                }}
+                                className={`relative ${canEdit ? 'cursor-grab active:cursor-grabbing' : ''}`}
                             >
+                                {dragId && overCol === col.key && overTask === task.id && dragId !== task.id && (
+                                    <span className="pointer-events-none absolute -top-1.5 left-0 right-0 h-0.5 rounded-full bg-indigo-500" aria-hidden="true" />
+                                )}
                                 <TaskCard task={task} dragging={dragId === task.id} />
                                 {/* Sur écran tactile, pas de glisser-déposer : boutons de déplacement. */}
                                 {canEdit && (

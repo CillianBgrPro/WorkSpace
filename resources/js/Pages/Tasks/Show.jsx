@@ -9,7 +9,7 @@ import Button from '@/Components/ui/Button';
 import { Card, CardHeader } from '@/Components/ui/Card';
 import Avatar from '@/Components/ui/Avatar';
 import { assigneesOf } from '@/lib/taskMeta';
-import { StatusBadge, PriorityBadge, DueBadge } from '@/Components/ui/Badge';
+import { StatusBadge, PriorityBadge, DueBadge, RecurrenceBadge } from '@/Components/ui/Badge';
 import { confirmDelete } from '@/Components/ui/ConfirmDialog';
 import { STATUSES, normalizeStatus, isDone } from '@/lib/taskMeta';
 import { formatDate, formatRelative } from '@/lib/format';
@@ -46,6 +46,7 @@ export default function ShowTask({ task, canEdit = true, members = [] }) {
                         <StatusBadge status={task.status} />
                         <PriorityBadge priority={task.priority} />
                         {task.due_date && <DueBadge date={task.due_date} done={done} />}
+                        <RecurrenceBadge recurrence={task.recurrence} />
                     </>
                 }
                 actions={canEdit && (

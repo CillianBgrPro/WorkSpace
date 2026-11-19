@@ -27,3 +27,9 @@ export function assigneesOf(task) {
     if (task.assigned_users?.length) return task.assigned_users;
     return task.assignee ? [task.assignee] : [];
 }
+
+export const RECURRENCES = {
+    daily: 'Chaque jour',
+    weekly: 'Chaque semaine',
+    monthly: 'Chaque mois',
+};

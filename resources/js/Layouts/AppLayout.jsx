@@ -4,7 +4,7 @@ import {
     HomeIcon, CheckCircleIcon, UsersIcon, CalendarIcon, CurrencyEuroIcon,
     ChevronDoubleLeftIcon, ChevronDoubleRightIcon, ArrowRightOnRectangleIcon,
     FolderIcon, UserPlusIcon, DocumentIcon, Bars3Icon, XMarkIcon, MagnifyingGlassIcon,
-    ChevronUpDownIcon, QuestionMarkCircleIcon,
+    ChevronUpDownIcon, QuestionMarkCircleIcon, InboxIcon,
 } from '@heroicons/react/24/outline';
 import {
     HomeIcon as HomeSolid, CheckCircleIcon as CheckSolid, CalendarIcon as CalendarSolid, CurrencyEuroIcon as EuroSolid,
@@ -113,13 +113,18 @@ function SidebarContent({ collapsed, activeProject, navItems, currentUrl, user, 
             </div>
 
             <nav className="mt-3 flex-1 space-y-0.5 overflow-y-auto px-3" aria-label="Navigation principale">
+                <NavItem
+                    item={{ href: '/my-tasks', icon: InboxIcon, label: 'Mes tâches', shortcut: 'G M' }}
+                    collapsed={collapsed}
+                    active={isActive(currentUrl, '/my-tasks')}
+                />
+                {!collapsed && <p className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-wider text-white/30">{activeProject ? activeProject.name : 'Projet'}</p>}
                 {navItems.map((item) => (
                     <NavItem key={item.href} item={item} collapsed={collapsed} active={isActive(currentUrl, item.href)} />
                 ))}
 
                 {activeProject && (
                     <>
-                        {!collapsed && <p className="px-3 pb-1 pt-5 text-[10px] font-semibold uppercase tracking-wider text-white/30">Projet</p>}
                         <NavItem
                             item={{ href: `/projects/${activeProject.id}`, icon: UserPlusIcon, label: 'Membres' }}
                             collapsed={collapsed}
@@ -214,6 +219,7 @@ export default function AppLayout({ children, header }) {
         'g e': () => router.visit('/teams'),
         'g f': () => router.visit('/project-files'),
         'g p': () => router.visit('/projects'),
+        'g m': () => router.visit('/my-tasks'),
     });
 
     useEffect(() => {
