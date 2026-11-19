@@ -3,6 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
+import GoogleButton, { OrSeparator } from '@/Components/GoogleButton';
 import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function Register() {
@@ -24,6 +25,11 @@ export default function Register() {
     return (
         <GuestLayout>
             <Head title="S'enregistrer" />
+
+            <GoogleButton label="S'inscrire avec Google" />
+
+            <OrSeparator />
+
 
             <form onSubmit={submit}>
                 <div>

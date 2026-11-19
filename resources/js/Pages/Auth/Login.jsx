@@ -3,6 +3,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
+import GoogleButton, { OrSeparator } from '@/Components/GoogleButton';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 
@@ -28,6 +29,9 @@ export default function Login({ status, canResetPassword }) {
             {status && (
                 <div className="mb-4 text-sm font-medium text-green-600">{status}</div>
             )}
+
+            <GoogleButton />
+            <OrSeparator />
 
             <form onSubmit={submit} className="space-y-5">
 
