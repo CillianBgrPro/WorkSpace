@@ -67,4 +67,38 @@ class GoogleAuthTest extends TestCase
         $this->assertGuest();
         $this->assertSame(0, User::count());
     }
+
+    public function test_register_with_existing_google_account_is_refused(): void
+    {
+        $existing = User::factory()->create(['email' => 'jean@example.com', 'google_id' => 'g-123']);
+        $this->mockGoogleUser('g-123', 'jean@example.com');
+
+        $this->withSession(['google_auth_intent' => 'register'])
+            ->get('/auth/google/callback')
+            ->assertRedirect(route('login'))
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+        $this->assertSame(1, User::count());
+    }
+
+    public function test_register_with_email_of_existing_account_is_refused(): void
+    {
+        $existing = User::factory()->create(['email' => 'jean@example.com']);
+        $this->mockGoogleUser('g-999', 'jean@example.com');
+
+        $this->withSession(['google_auth_intent' => 'register'])
+            ->get('/auth/google/callback')
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest();
+        $this->assertNull($existing->fresh()->google_id);
+    }
+
+    public function test_register_intent_is_stored_on_redirect(): void
+    {
+        config(['services.google.client_id' => 'test-id', 'services.google.client_secret' => 'secret']);
+
+        $this->get('/auth/google?intent=register')->assertSessionHas('google_auth_intent', 'register');
+    }
 }

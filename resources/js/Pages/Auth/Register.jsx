@@ -26,7 +26,7 @@ export default function Register() {
         <GuestLayout>
             <Head title="S'enregistrer" />
 
-            <GoogleButton label="S'inscrire avec Google" />
+            <GoogleButton label="S'inscrire avec Google" intent="register" />
 
             <OrSeparator />
 
