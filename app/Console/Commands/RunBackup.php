@@ -47,8 +47,15 @@ class RunBackup extends Command
             $zip->addFile($file->getPathname(), $file->getRelativePathname());
             $count++;
         }
+        // Manifeste toujours présent : l'archive existe même sans fichier (ZipArchive n'écrit pas d'archive vide).
+        $zip->addFromString('MANIFEST.txt', implode("\n", [
+            'Sauvegarde WorkSpace',
+            'Date : ' . now()->format('d/m/Y H:i:s'),
+            "Fichiers : {$count}",
+            'Version : ' . trim((string) @shell_exec('git -C ' . escapeshellarg(base_path()) . ' log --oneline -1 2>/dev/null')),
+        ]) . "\n");
         $zip->close();
-        $this->line("Fichiers : {$count} (" . ($count ? $this->size($zipPath) : 'vide') . ')');
+        $this->line("Fichiers : {$count} (" . $this->size($zipPath) . ')');
 
         // 3. Rotation.
         $all = collect(File::directories($root))->sort()->values();
