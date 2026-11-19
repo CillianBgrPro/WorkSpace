@@ -27,9 +27,9 @@ export default function TaskCard({ task }) {
                 {task.description || 'Aucune description'}
             </p>
 
-            <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-3 flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
                 <span>{labels[task.status]}</span>
-                <span>{task.due_date ? `Deadline: ${task.due_date}` : 'Sans deadline'}</span>
+                <span>{task.due_date ? `Échéance : ${new Date(task.due_date).toLocaleDateString('fr-FR')}` : 'Sans échéance'}</span>
             </div>
         </Link>
     );

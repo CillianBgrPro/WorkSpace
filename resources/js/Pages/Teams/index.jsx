@@ -6,12 +6,12 @@ export default function TeamIndex({ teams }) {
         <AppLayout header="Equipes">
             <Head title="Equipes" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div>
                     <h2 className="text-xl font-semibold dark:text-white">Gestion des equipes</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Créer et organiser vos collaborateurs.</p>
                 </div>
-                <Link href="/teams/create" className="px-4 py-2 rounded-lg bg-indigo-600 text-white">
+                <Link href="/teams/create" className="text-center whitespace-nowrap px-4 py-2 rounded-lg bg-indigo-600 text-white">
                     Nouvelle equipe
                 </Link>
             </div>

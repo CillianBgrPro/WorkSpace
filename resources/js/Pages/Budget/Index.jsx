@@ -7,7 +7,7 @@ export default function BudgetIndex({ budgets }) {
         <AppLayout header="Budget">
             <Head title="Budget" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div>
                     <h2 className="text-xl font-semibold dark:text-white">Gestion du budget</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Visualisez et contrôlez vos dépenses.</p>
@@ -15,12 +15,12 @@ export default function BudgetIndex({ budgets }) {
                 <div className="flex items-center gap-3">
                     <a
                         href={route('reports.expenses.csv')}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                        className="inline-flex flex-1 sm:flex-none justify-center whitespace-nowrap items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                     >
                         <ArrowDownTrayIcon className="w-4 h-4" />
-                        Export CSV Dépenses
+                        Export CSV
                     </a>
-                    <Link href="/budgets/create" className="px-4 py-2 rounded-lg bg-indigo-600 text-white">
+                    <Link href="/budgets/create" className="flex-1 sm:flex-none text-center whitespace-nowrap px-4 py-2 rounded-lg bg-indigo-600 text-white">
                         Nouveau budget
                     </Link>
                 </div>

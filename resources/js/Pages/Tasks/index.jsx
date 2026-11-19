@@ -36,7 +36,7 @@ export default function TaskIndex({ tasks = [], filters = {}, canEdit = true }) 
             <Head title="Tâches" />
 
             <div className="space-y-5">
-                <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-xl font-semibold dark:text-white">Gestion des tâches</h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">Organisez et suivez le travail de votre équipe.</p>
@@ -45,7 +45,7 @@ export default function TaskIndex({ tasks = [], filters = {}, canEdit = true }) 
                     <div className="flex items-center gap-3">
                         <a
                             href={route('reports.tasks.csv')}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                            className="inline-flex flex-1 sm:flex-none justify-center whitespace-nowrap items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                         >
                             <ArrowDownTrayIcon className="w-4 h-4" />
                             Export CSV
@@ -54,7 +54,7 @@ export default function TaskIndex({ tasks = [], filters = {}, canEdit = true }) 
                         {canEdit && (
                             <Link
                                 href="/tasks/create"
-                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition shadow"
+                                className="inline-flex flex-1 sm:flex-none justify-center whitespace-nowrap items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition shadow"
                             >
                                 <PlusIcon className="w-4 h-4" />
                                 Nouvelle tâche
@@ -75,13 +75,13 @@ export default function TaskIndex({ tasks = [], filters = {}, canEdit = true }) 
                         )}
                     </div>
                 ) : (
-                    <div className="grid gap-5 lg:grid-cols-3">
+                    <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible">
                         {Object.entries(columns).map(([statusKey, column]) => (
                             <div
                                 key={statusKey}
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDrop(e, statusKey)}
-                                className="bg-gray-100/80 dark:bg-gray-900/60 rounded-xl p-4 border border-gray-200/60 dark:border-gray-800 min-h-[400px] flex flex-col"
+                                className="w-[85%] shrink-0 snap-start sm:w-[60%] lg:w-auto bg-gray-100/80 dark:bg-gray-900/60 rounded-xl p-4 border border-gray-200/60 dark:border-gray-800 min-h-[240px] lg:min-h-[400px] flex flex-col"
                             >
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="font-semibold text-gray-800 dark:text-white flex items-center gap-2">

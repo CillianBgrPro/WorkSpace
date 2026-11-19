@@ -48,8 +48,8 @@ export default function Dashboard({ stats, recentActivities, upcomingDeadlines, 
             </div>
 
             {/* Cartes de statistiques */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Tâches</h3>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalTasks}</p>
                     <div className="mt-4">
@@ -58,7 +58,7 @@ export default function Dashboard({ stats, recentActivities, upcomingDeadlines, 
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Budget</h3>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBudget} €</p>
                     <div className="mt-4">
@@ -70,13 +70,13 @@ export default function Dashboard({ stats, recentActivities, upcomingDeadlines, 
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Reste à dépenser</h3>
                     <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{stats.remainingBudget} €</p>
                     <p className="text-xs text-gray-400 mt-4">Calculé par rapport au budget actif</p>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Prochaines Échéances</h3>
                     <p className="text-3xl font-bold text-amber-500">{upcomingDeadlines?.length ?? 0}</p>
                     <p className="text-xs text-gray-400 mt-4">Tâches à venir bientôt</p>
@@ -84,10 +84,10 @@ export default function Dashboard({ stats, recentActivities, upcomingDeadlines, 
             </div>
 
             {/* Grid 2 colonnes : Journal d'activité & Prochaines échéances */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
 
                 {/* Fil du journal d'activité (2 cols) */}
-                <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
                         <ClockIcon className="w-5 h-5 text-indigo-500" />
                         Journal d'Activité Récente
@@ -118,7 +118,7 @@ export default function Dashboard({ stats, recentActivities, upcomingDeadlines, 
                 </div>
 
                 {/* Prochaines échéances (1 col) */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Échéances à venir</h3>
                     {upcomingDeadlines.length === 0 ? (
                         <p className="text-sm text-gray-500 dark:text-gray-400">Aucune échéance prévue.</p>

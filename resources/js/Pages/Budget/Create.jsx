@@ -21,7 +21,7 @@ export default function CreateBudget() {
         <AppLayout header="Nouveau budget">
             <Head title="Créer un budget" />
 
-            <form onSubmit={submit} className="max-w-2xl bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-y-4">
+            <form onSubmit={submit} className="max-w-2xl bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow space-y-4">
                 <div>
                     <label className="block text-sm font-medium mb-1 dark:text-white">Nom du budget *</label>
                     <input

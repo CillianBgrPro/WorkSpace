@@ -22,7 +22,7 @@ export default function EditBudget({ budget }) {
             <Head title={`Modifier - ${budget.name}`} />
 
             <div className="max-w-3xl">
-                <div className="mb-6 flex items-center justify-between">
+                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-xl font-bold dark:text-white">Modifier les paramètres financiers</h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -31,13 +31,13 @@ export default function EditBudget({ budget }) {
                     </div>
                     <Link
                         href={`/budgets/${budget.id}`}
-                        className="px-4 py-2 text-sm rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
+                        className="self-start sm:self-auto whitespace-nowrap px-4 py-2 text-sm rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition"
                     >
                         Retour aux détails
                     </Link>
                 </div>
 
-                <form onSubmit={submit} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-y-5">
+                <form onSubmit={submit} className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow space-y-5">
                     <div>
                         <label className="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">
                             Nom du budget *

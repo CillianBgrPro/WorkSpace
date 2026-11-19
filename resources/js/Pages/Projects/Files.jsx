@@ -72,7 +72,7 @@ export default function ProjectFiles({ files = [], canEdit = false }) {
 
                 {/* Zone de téléversement */}
                 {canEdit && (
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-200 dark:border-gray-700">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                         <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
                             Ajouter un document ou fichier
                         </h2>
@@ -142,7 +142,7 @@ export default function ProjectFiles({ files = [], canEdit = false }) {
                 )}
 
                 {/* Liste des fichiers */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-200 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                             Documents du projet ({files.length})

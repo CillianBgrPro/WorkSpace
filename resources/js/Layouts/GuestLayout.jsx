@@ -50,8 +50,9 @@ export default function GuestLayout({ children }) {
             </div>
 
             {/* Colonne droite — formulaire */}
-            <div className="flex-1 flex items-center justify-center px-8 bg-white">
+            <div className="flex-1 flex items-center justify-center px-4 py-10 sm:px-8 bg-white">
                 <div className="w-full max-w-md">
+                    <Link href="/" className="lg:hidden mb-8 inline-block text-lg font-bold text-[#0f0a2e]">WorkSpace</Link>
                     {children}
                 </div>
             </div>

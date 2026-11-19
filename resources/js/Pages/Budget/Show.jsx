@@ -103,7 +103,7 @@ export default function ShowBudget({ budget }) {
                 </div>
 
                 {/* Main Budget Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                         <div className="space-y-1">
                             <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Description</span>
@@ -192,7 +192,7 @@ export default function ShowBudget({ budget }) {
                 <div className="grid gap-6 lg:grid-cols-3">
                     
                     {/* Left Column: Categories */}
-                    <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 h-fit space-y-6">
+                    <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 h-fit space-y-6">
                         <div>
                             <h3 className="text-lg font-bold dark:text-white">Catégories</h3>
                             <p className="text-xs text-gray-400">Visualisez les dépenses par poste budgétaire.</p>
@@ -295,7 +295,7 @@ export default function ShowBudget({ budget }) {
                     <div className="lg:col-span-2 space-y-6">
                         
                         {/* Panel: Add Expense */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                             <div>
                                 <h3 className="text-lg font-bold dark:text-white">Nouvelle dépense</h3>
                                 <p className="text-xs text-gray-400">Enregistrez un nouveau flux financier sortant.</p>
@@ -397,7 +397,7 @@ export default function ShowBudget({ budget }) {
                         </div>
 
                         {/* Panel: Transaction History */}
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700">
                             <div>
                                 <h3 className="text-lg font-bold dark:text-white">Historique des transactions</h3>
                                 <p className="text-xs text-gray-400">Journal d'activité financière en temps réel.</p>

@@ -14,7 +14,7 @@ export default function TeamForm({ team = null, users = [], onSubmit, submitLabe
     };
 
     return (
-        <form onSubmit={submit} className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+        <form onSubmit={submit} className="space-y-4 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow">
             <div>
                 <label className="block text-sm font-medium mb-1 dark:text-white">Nom de l'equipe</label>
                 <input

@@ -57,9 +57,6 @@ export default function Login({ status, canResetPassword }) {
 
                 <div>
                     <div className="flex items-center justify-between">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <LockClosedIcon className="h-5 w-5" />
-                        </span>
                         <InputLabel htmlFor="password" value="Mot de passe" />
                         {canResetPassword && (
                             <Link href={route('password.request')} className="text-sm text-indigo-600 hover:text-indigo-500">
@@ -67,15 +64,20 @@ export default function Login({ status, canResetPassword }) {
                             </Link>
                         )}
                     </div>
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="current-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
+                    <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            <LockClosedIcon className="h-5 w-5" />
+                        </span>
+                        <TextInput
+                            id="password"
+                            type="password"
+                            name="password"
+                            value={data.password}
+                            className="block w-full pl-9"
+                            autoComplete="current-password"
+                            onChange={(e) => setData('password', e.target.value)}
+                        />
+                    </div>
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 

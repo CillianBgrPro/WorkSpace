@@ -88,10 +88,10 @@ export default function Welcome({ auth }) {
     return (
         <>
             <Head title="Accueil" />
-            <div className="min-h-screen bg-[#0d0d1a] text-white">
+            <div className="min-h-screen overflow-x-hidden bg-[#0d0d1a] text-white">
 
                 {/* Navbar */}
-                <nav className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto">
+                <nav className="flex items-center justify-between gap-3 px-4 sm:px-8 py-5 max-w-7xl mx-auto">
                     <div className="flex items-center gap-3">
                         <span className="font-bold text-lg">WorkSpace</span>
                     </div>
@@ -102,11 +102,12 @@ export default function Welcome({ auth }) {
                             </Link>
                         ) : (
                             <>
-                                <Link href={route('login')} className="border border-white/20 hover:border-white/40 px-5 py-2 rounded-lg text-sm font-medium transition">
+                                <Link href={route('login')} className="hidden sm:inline-block border border-white/20 hover:border-white/40 px-5 py-2 rounded-lg text-sm font-medium transition">
                                     Se connecter
                                 </Link>
-                                <Link href={route('register')} className="bg-indigo-600 hover:bg-indigo-700 px-5 py-2 rounded-lg text-sm font-medium transition">
-                                    Commencer gratuitement
+                                <Link href={route('register')} className="whitespace-nowrap bg-indigo-600 hover:bg-indigo-700 px-4 sm:px-5 py-2 rounded-lg text-sm font-medium transition">
+                                    <span className="sm:hidden">Commencer</span>
+                                    <span className="hidden sm:inline">Commencer gratuitement</span>
                                 </Link>
                             </>
                         )}
@@ -114,22 +115,22 @@ export default function Welcome({ auth }) {
                 </nav>
 
                 {/* Hero */}
-                <section className="text-center px-6 pt-20 pb-16 max-w-4xl mx-auto">
+                <section className="text-center px-4 sm:px-6 pt-12 sm:pt-20 pb-12 sm:pb-16 max-w-4xl mx-auto">
                     <div className="inline-flex items-center gap-2 border border-white/10 bg-white/5 text-sm px-4 py-1.5 rounded-full mb-8 text-white/70">
                         <span className="w-2 h-2 bg-green-400 rounded-full"></span>
                         Plateforme de gestion de projet tout-en-un
                     </div>
-                    <h1 className="text-6xl font-extrabold leading-tight mb-6">
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
                         Gérez vos projets<br />
                         <span className="bg-gradient-to-r from-indigo-400 to-teal-400 bg-clip-text text-transparent">
                             avec WorkSpace.
                         </span>
                     </h1>
-                    <p className="text-white/50 text-lg max-w-2xl mx-auto mb-10">
+                    <p className="text-white/50 text-base sm:text-lg max-w-2xl mx-auto mb-10">
                         Tableau de bord analytique, gestion d'équipe, suivi budgétaire et calendrier collaboratif — tout ce dont vous avez besoin pour livrer plus vite.
                     </p>
-                    <div className="flex items-center justify-center gap-4 mb-6">
-                        <Link href={route('register')} className="bg-indigo-600 hover:bg-indigo-700 px-7 py-3.5 rounded-xl font-semibold transition flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 mb-6">
+                        <Link href={route('register')} className="bg-indigo-600 hover:bg-indigo-700 px-7 py-3.5 rounded-xl font-semibold transition flex items-center justify-center gap-2">
                             Démarrer gratuitement →
                         </Link>
                         <Link href={route('login')} className="border border-white/20 hover:border-white/40 bg-white/5 px-7 py-3.5 rounded-xl font-semibold transition">
@@ -139,11 +140,11 @@ export default function Welcome({ auth }) {
                 </section>
 
                 {/* Stats */}
-                <section className="max-w-5xl mx-auto px-6 pb-24">
+                <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
                     <div className="grid grid-cols-2 lg:grid-cols-4 border border-white/10 rounded-2xl overflow-hidden">
                         {stats.map(({ value, label }, i) => (
-                            <div key={label} className={`p-8 text-center ${i < stats.length - 1 ? 'border-r border-white/10' : ''} bg-white/5`}>
-                                <p className="text-4xl font-extrabold mb-1">{value}</p>
+                            <div key={label} className={`p-5 sm:p-8 text-center border-white/10 ${i % 2 === 0 ? 'border-r' : ''} ${i < 2 ? 'border-b lg:border-b-0' : ''} ${i === 1 ? 'lg:border-r' : ''} bg-white/5`}>
+                                <p className="text-3xl sm:text-4xl font-extrabold mb-1">{value}</p>
                                 <p className="text-white/40 text-sm">{label}</p>
                             </div>
                         ))}
@@ -151,12 +152,12 @@ export default function Welcome({ auth }) {
                 </section>
 
                 {/* Features */}
-                <section className="max-w-5xl mx-auto px-6 pb-24 text-center">
+                <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 text-center">
                     <div className="inline-flex items-center gap-2 border border-white/10 bg-white/5 text-sm px-4 py-1.5 rounded-full mb-6 text-white/70">
                         ✦ Tout en un seul outil
                     </div>
-                    <h2 className="text-4xl font-extrabold mb-2">5 modules pour piloter</h2>
-                    <p className="text-white/40 text-3xl font-extrabold mb-12">chaque aspect de vos projets</p>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold mb-2">5 modules pour piloter</h2>
+                    <p className="text-white/40 text-2xl sm:text-3xl font-extrabold mb-10 sm:mb-12">chaque aspect de vos projets</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {features.map(({ icon, label, sub, color }) => (
                             <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-6 text-left hover:bg-white/10 hover:scale-105 transition duration-300">
@@ -172,7 +173,7 @@ export default function Welcome({ auth }) {
 
                 {/* Testimonials */}
 
-                <section className="max-w-5xl mx-auto px-6 pb-24 text-center">
+                <section className="max-w-5xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24 text-center">
 
                     <div className="flex justify-center gap-1 text-yellow-400 text-xl mb-4">
 
@@ -196,7 +197,7 @@ export default function Welcome({ auth }) {
                         </svg>
 
                     </div>
-                    <h2 className="text-3xl font-extrabold mb-12">Ils nous font confiance</h2>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold mb-8 sm:mb-12">Ils nous font confiance</h2>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         {testimonials.map(({ initials, color, quote, name, role }) => (
 
@@ -239,14 +240,14 @@ export default function Welcome({ auth }) {
                 </section>
 
                 {/* CTA */}
-                <section className="max-w-3xl mx-auto px-6 pb-24">
-                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 border border-indigo-500/20 rounded-3xl p-16 text-center">
-                        <h2 className="text-4xl font-extrabold mb-4">Prêt à transformer<br />votre gestion de projet ?</h2>
+                <section className="max-w-3xl mx-auto px-4 sm:px-6 pb-16 sm:pb-24">
+                    <div className="bg-gradient-to-br from-indigo-900/60 to-purple-900/40 border border-indigo-500/20 rounded-3xl px-6 py-10 sm:p-16 text-center">
+                        <h2 className="text-3xl sm:text-4xl font-extrabold mb-4">Prêt à transformer<br />votre gestion de projet ?</h2>
                         <p className="text-white/50 mb-8 max-w-md mx-auto">
                             Rejoignez plus de 0 entreprises qui font confiance à WorkSpace pour livrer leurs projets dans les délais et le budget.
                         </p>
-                        <div className="flex items-center justify-center gap-4">
-                            <Link href={route('register')} className="bg-indigo-600 hover:bg-indigo-700 px-7 py-3.5 rounded-xl font-semibold transition flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
+                            <Link href={route('register')} className="bg-indigo-600 hover:bg-indigo-700 px-7 py-3.5 rounded-xl font-semibold transition flex items-center justify-center gap-2">
                                 Créer mon compte gratuitement →
                             </Link>
                             <Link href={route('login')} className="border border-white/20 hover:border-white/40 bg-white/5 px-7 py-3.5 rounded-xl font-semibold transition">
@@ -257,8 +258,7 @@ export default function Welcome({ auth }) {
                 </section>
 
                 {/* Footer */}
-                <span className="font-bold text-lg">WorkSpace</span>
-                <footer className="border-t border-white/10 px-8 py-6 max-w-7xl mx-auto flex items-center justify-between text-white/30 text-sm">
+                <footer className="border-t border-white/10 px-4 sm:px-8 py-6 max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-white/30 text-sm">
                     <div className="flex items-center gap-2">
                         <span className="font-bold text-lg">WorkSpace</span>
                         © 2026. Tous droits réservés.

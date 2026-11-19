@@ -44,7 +44,7 @@ export default function ProjectShow({ project }) {
                 </Link>
 
                 {/* Infos projet */}
-                <div className="bg-white rounded-xl shadow p-6 border-l-4" style={{ borderColor: project.color }}>
+                <div className="bg-white rounded-xl shadow p-4 sm:p-6 border-l-4" style={{ borderColor: project.color }}>
                     <div className="flex items-center gap-4 mb-4">
                         <div
                             className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl"
@@ -71,7 +71,7 @@ export default function ProjectShow({ project }) {
                 </div>
 
                 {/* Membres */}
-                <div className="bg-white rounded-xl shadow p-6">
+                <div className="bg-white rounded-xl shadow p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-gray-800">
                             Membres ({project.members?.length ?? 0})

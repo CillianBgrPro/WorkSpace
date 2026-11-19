@@ -27,7 +27,7 @@ export default function TeamEdit({ team, users }) {
             <Head title={team.name} />
 
             <div className="grid gap-4 lg:grid-cols-2">
-                <form onSubmit={updateTeam} className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+                <form onSubmit={updateTeam} className="space-y-4 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow">
                     <h3 className="text-lg font-semibold dark:text-white">Modifier l'equipe</h3>
 
                     <div>
@@ -60,7 +60,7 @@ export default function TeamEdit({ team, users }) {
                 </form>
 
                 <div className="space-y-4">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+                    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow">
                         <h3 className="text-lg font-semibold dark:text-white">Membres</h3>
                         <div className="mt-4 space-y-3">
                             {team.members.map((member) => (
@@ -78,7 +78,7 @@ export default function TeamEdit({ team, users }) {
                         </div>
                     </div>
 
-                    <form onSubmit={addMember} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-y-4">
+                    <form onSubmit={addMember} className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow space-y-4">
                         <h3 className="text-lg font-semibold dark:text-white">Ajouter un membre</h3>
 
                         <div>

@@ -22,7 +22,7 @@ export default function TaskComments({ task }) {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-y-4">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow space-y-4">
             <h3 className="font-semibold dark:text-white">
                 Commentaires ({comments.length})
             </h3>

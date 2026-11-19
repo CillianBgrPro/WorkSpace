@@ -318,3 +318,45 @@
     color: var(--calendar-text) !important;
     font-weight: 600;
 }
+/* Calendrier — tablettes et petits écrans */
+@media (max-width: 1023px) {
+    .fc .fc-toolbar {
+        gap: 0.5rem;
+    }
+    .fc .fc-footer-toolbar {
+        margin-top: 0.75rem;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 767px) {
+    .fc .fc-toolbar-title {
+        font-size: 1.05rem !important;
+        text-align: center;
+    }
+    .fc .fc-button {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+    }
+    .fc .fc-footer-toolbar {
+        margin-top: 0.75rem;
+        justify-content: center;
+    }
+    .fc .fc-daygrid-day-number {
+        font-size: 0.75rem;
+        padding: 2px 4px;
+    }
+    .fc .fc-col-header-cell-cushion {
+        font-size: 0.65rem;
+        padding: 4px 0;
+    }
+}
+
+/* Évite le zoom automatique d'iOS sur les champs de formulaire */
+@media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}

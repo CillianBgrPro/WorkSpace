@@ -15,7 +15,7 @@ export default function ShowTask({ task }) {
             <Head title={task.title} />
 
             <div className="space-y-4">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow space-y-3">
+                <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow space-y-3">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Etat: {task.status}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Priorite: {task.priority}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -46,7 +46,7 @@ export default function ShowTask({ task }) {
                 <TaskComments task={task} />
 
                 {/* Sous-tâches */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+                <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow">
                     <h3 className="font-semibold dark:text-white mb-3">
                         Sous-taches ({task.subtasks?.length ?? 0})
                     </h3>
